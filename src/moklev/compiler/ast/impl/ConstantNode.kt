@@ -5,4 +5,4 @@ import moklev.compiler.ast.ExpressionASTNode
 /**
  * @author Moklev Vyacheslav
  */
-class BinaryOperation(val op: String, val left: ExpressionASTNode, val right: ExpressionASTNode) : ExpressionASTNode
+class ConstantNode(val value: String) : ExpressionASTNode
