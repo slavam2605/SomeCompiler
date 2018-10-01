@@ -5,4 +5,4 @@ import moklev.compiler.ast.ASTNode
 /**
  * @author Moklev Vyacheslav
  */
-class Constant(val value: String) : ASTNode
+class BinaryOperation(val op: String, val left: ASTNode, val right: ASTNode) : ASTNode
