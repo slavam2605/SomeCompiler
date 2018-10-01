@@ -1,6 +1,8 @@
 package moklev.compiler.compilation
 
 import moklev.compiler.ast.ASTNode
+import moklev.compiler.ast.ExpressionASTNode
+import moklev.compiler.ast.StatementASTNode
 import moklev.compiler.ast.impl.BinaryOperation
 import moklev.compiler.ast.impl.Constant
 import moklev.compiler.exceptions.CompilationException
@@ -17,20 +19,18 @@ import moklev.compiler.types.ScalarType
  */
 class SemanticBuilder {
     fun build(root: ASTNode): SemanticElement {
-        try {
+        if (root is StatementASTNode)
             return buildStatement(root)
-        } catch (e: CompilationException) {}
         throw CompilationException(root, "Unknown ASTNode: $root")
     }
     
-    fun buildStatement(root: ASTNode): SemanticStatement {
-        try {
+    fun buildStatement(root: StatementASTNode): SemanticStatement {
+        if (root is ExpressionASTNode)
             return buildExpression(root)
-        } catch (e: CompilationException) {}
         throw CompilationException(root, "Not a statement ASTNode: $root")
     }
     
-    fun buildExpression(root: ASTNode): SemanticExpression {
+    fun buildExpression(root: ExpressionASTNode): SemanticExpression {
         if (root is Constant)
             return buildConstant(root)
         if (root is BinaryOperation)
