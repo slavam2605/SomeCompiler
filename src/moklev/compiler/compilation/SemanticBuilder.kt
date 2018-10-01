@@ -16,6 +16,7 @@ import moklev.compiler.types.ScalarType
  */
 class SemanticBuilder {
     val typeResolver = TypeResolver()
+    val symbolResolver = SymbolResolver()
     
     fun build(root: ASTNode): SemanticElement {
         if (root is StatementASTNode)
@@ -40,7 +41,13 @@ class SemanticBuilder {
             return buildConstant(root)
         if (root is BinaryOperationNode)
             return buildBinaryOperation(root)
+        if (root is SymbolNode)
+            return buildSymbol(root)
         throw CompilationException(root, "Not an expression ASTNode: $root")
+    }
+    
+    fun buildSymbol(node: SymbolNode): SemanticExpression {
+        return symbolResolver.resolveSymbol(node.name)
     }
     
     fun buildAssignment(node: AssignmentNode): Assignment {
@@ -55,6 +62,7 @@ class SemanticBuilder {
     
     fun buildVariableDeclaration(node: VariableDeclarationNode): VariableDeclaration {
         val type = typeResolver.resolveType(node.type)
+        symbolResolver.declareVariable(node.name, type)
         return VariableDeclaration(node.name, type)
     }
     
