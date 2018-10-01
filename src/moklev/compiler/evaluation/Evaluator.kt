@@ -20,6 +20,8 @@ class Evaluator {
             return evaluateStatementList(statement)
         if (statement is VariableDeclaration)
             return evaluateVariableDeclaration(statement)
+        if (statement is While)
+            return evaluateWhile(statement)
         if (statement is SemanticExpression)
             return evaluateExpression(statement).let { Unit }
         throw EvaluationException(statement, "Unknown semantic statement: $statement")
@@ -35,6 +37,13 @@ class Evaluator {
         if (expression is VariableReference)
             return evaluateVariableReference(expression)
         throw EvaluationException(expression, "Unknown semantic expression: $expression")
+    }
+    
+    fun evaluateWhile(element: While) {
+        val condition = { evaluateExpression(element.condition).booleanValue }
+        while (condition()) {
+            evaluateStatement(element.body)
+        }
     }
     
     fun evaluateVariableReference(element: VariableReference): Value {
@@ -75,6 +84,7 @@ class Evaluator {
         return when (element.op) {
             "+" -> Value.Int64(left.int64Value + right.int64Value)
             "==" -> Value.Boolean(left.int64Value == right.int64Value)
+            "<" -> Value.Boolean(left.int64Value < right.int64Value)
             else -> throw EvaluationException(element, "Unknown op for Int64BinaryOperation: \"${element.op}\"")
         }
     }

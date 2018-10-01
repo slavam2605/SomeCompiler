@@ -14,7 +14,7 @@ class Int64BinaryOperation(val op: String, val left: SemanticExpression, val rig
     init {
         when (op) {
             "+" -> type = ScalarType.INT64
-            "==" -> type = ScalarType.BOOLEAN
+            "==", "<" -> type = ScalarType.BOOLEAN
             else -> throw CompilationException(this, "Unsupported binary operation for Int64: $op")
         }
     }
