@@ -1,5 +1,7 @@
 package moklev.compiler.evaluation
 
+import moklev.compiler.types.ScalarType
+
 /**
  * @author Moklev Vyacheslav
  */
@@ -17,6 +19,13 @@ sealed class Value {
     val booleanValue: kotlin.Boolean
         get() = (this as Boolean).value
 
+    val type
+        get() = when (this) {
+            is Int64 -> ScalarType.INT64
+            is Double -> ScalarType.DOUBLE
+            is Boolean -> ScalarType.BOOLEAN
+        }
+    
     override fun toString(): String {
         return when (this) {
             is Int64 -> "Int64[$value]"
