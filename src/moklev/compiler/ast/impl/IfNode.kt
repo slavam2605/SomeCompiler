@@ -6,4 +6,8 @@ import moklev.compiler.ast.StatementASTNode
 /**
  * @author Moklev Vyacheslav
  */
-class AssignmentNode(val target: ExpressionASTNode, val value: ExpressionASTNode) : StatementASTNode
+class IfNode(
+        val condition: ExpressionASTNode, 
+        val bodyTrue: StatementASTNode, 
+        val bodyFalse: StatementASTNode 
+) : StatementASTNode

@@ -4,14 +4,12 @@ import moklev.compiler.exceptions.EvaluationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
-import moklev.compiler.types.Type
 
 /**
  * @author Moklev Vyacheslav
  */
 class Evaluator {
-    val variableType = mutableMapOf<String, Type>()
-    val variableState = mutableMapOf<String, Value>()
+    val variableState = mutableListOf(mutableMapOf<String, Value>())
     
     fun evaluateStatement(statement: SemanticStatement) {
         if (statement is Assignment)
@@ -22,6 +20,8 @@ class Evaluator {
             return evaluateVariableDeclaration(statement)
         if (statement is While)
             return evaluateWhile(statement)
+        if (statement is If)
+            return evaluateIf(statement)
         if (statement is SemanticExpression)
             return evaluateExpression(statement).let { Unit }
         throw EvaluationException(statement, "Unknown semantic statement: $statement")
@@ -34,30 +34,46 @@ class Evaluator {
             return evaluateDoubleConstant(expression)
         if (expression is Int64BinaryOperation)
             return evaluateInt64BinaryOperation(expression)
-        if (expression is VariableReference)
+        if (expression is LocalVariableReference)
             return evaluateVariableReference(expression)
         throw EvaluationException(expression, "Unknown semantic expression: $expression")
+    }
+    
+    fun evaluateIf(element: If) {
+        val condition = { evaluateExpression(element.condition).booleanValue }
+        if (condition()) {
+            withScope {
+                evaluateStatement(element.bodyTrue)
+            }
+        } else {
+            withScope {
+                evaluateStatement(element.bodyFalse)
+            }
+        }
     }
     
     fun evaluateWhile(element: While) {
         val condition = { evaluateExpression(element.condition).booleanValue }
         while (condition()) {
-            evaluateStatement(element.body)
+            withScope {
+                evaluateStatement(element.body)
+            }
         }
     }
     
-    fun evaluateVariableReference(element: VariableReference): Value {
-        return variableState[element.name]
+    fun evaluateVariableReference(element: LocalVariableReference): Value {
+        return variableState[variableState.lastIndex - element.scopeLevel][element.name]
                 ?: throw EvaluationException(element, "Variable is not initialized: ${element.name}") 
     }
     
     fun evaluateAssignment(element: Assignment) {
         val value = evaluateExpression(element.value)
-        val type = variableType.get(element.variableName) 
-                ?: throw EvaluationException(element, "Variable ${element.variableName} is undefined")
-        if (value.type != type)
-            throw EvaluationException(element, "Type mismatch: ${value.type} and $type")
-        variableState[element.variableName] = value
+        val target = element.target
+        if (target !is LocalVariableReference)
+            throw EvaluationException(element, "Left side of expression is not an assignable expression: $target")
+        if (value.type != target.type)
+            throw EvaluationException(element, "Type mismatch: ${value.type} and ${target.type}")
+        variableState[variableState.lastIndex - target.scopeLevel][target.name] = value
     }
     
     fun evaluateStatementList(element: StatementList) {
@@ -66,9 +82,7 @@ class Evaluator {
         }
     }
     
-    fun evaluateVariableDeclaration(element: VariableDeclaration) {
-        variableType[element.name] = element.type
-    }
+    fun evaluateVariableDeclaration(element: VariableDeclaration) = Unit
     
     fun evaluateInt64Constant(element: Int64Constant): Value {
         return Value.Int64(element.value)
@@ -86,6 +100,15 @@ class Evaluator {
             "==" -> Value.Boolean(left.int64Value == right.int64Value)
             "<" -> Value.Boolean(left.int64Value < right.int64Value)
             else -> throw EvaluationException(element, "Unknown op for Int64BinaryOperation: \"${element.op}\"")
+        }
+    }
+    
+    private inline fun <T> withScope(body: () -> T): T {
+        variableState.add(mutableMapOf())
+        try {
+            return body()
+        } finally {
+            variableState.removeAt(variableState.lastIndex)
         }
     }
 }

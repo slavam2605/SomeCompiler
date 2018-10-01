@@ -6,4 +6,8 @@ import moklev.compiler.semantic.SemanticStatement
 /**
  * @author Moklev Vyacheslav
  */
-class Assignment(val target: SemanticExpression, val value: SemanticExpression) : SemanticStatement
+class If(
+        val condition: SemanticExpression,
+        val bodyTrue: SemanticStatement,
+        val bodyFalse: SemanticStatement
+) : SemanticStatement

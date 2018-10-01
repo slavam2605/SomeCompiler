@@ -6,4 +6,4 @@ import moklev.compiler.types.Type
 /**
  * @author Moklev Vyacheslav
  */
-class VariableReference(val name: String, override val type: Type) : SemanticExpression
+class LocalVariableReference(val name: String, override val type: Type, val scopeLevel: Int) : SemanticExpression

@@ -33,6 +33,8 @@ class SemanticBuilder {
             return buildVariableDeclaration(root)
         if (root is WhileNode)
             return buildWhile(root)
+        if (root is IfNode)
+            return buildIf(root)
         if (root is ExpressionASTNode)
             return buildExpression(root)
         throw CompilationException(root, "Not a statement ASTNode: $root")
@@ -48,11 +50,26 @@ class SemanticBuilder {
         throw CompilationException(root, "Not an expression ASTNode: $root")
     }
  
+    fun buildIf(node: IfNode): SemanticStatement {
+        val condition = buildExpression(node.condition)
+        if (condition.type != ScalarType.BOOLEAN)
+            throw CompilationException(node, "Condition of `if` statement should have Boolean type, found: ${condition.type}")
+        val bodyTrue = symbolResolver.withScope {
+            buildStatement(node.bodyTrue)
+        }
+        val bodyFalse = symbolResolver.withScope {
+            buildStatement(node.bodyFalse)
+        }
+        return If(condition, bodyTrue, bodyFalse)
+    }
+    
     fun buildWhile(node: WhileNode): SemanticStatement {
         val condition = buildExpression(node.condition)
         if (condition.type != ScalarType.BOOLEAN)
             throw CompilationException(node, "Condition of `while` statement should have Boolean type, found: ${condition.type}")
-        val body = buildStatement(node.body)
+        val body = symbolResolver.withScope {
+            buildStatement(node.body)
+        }
         return While(condition, body)
     }
     
@@ -62,7 +79,8 @@ class SemanticBuilder {
     
     fun buildAssignment(node: AssignmentNode): Assignment {
         val value = buildExpression(node.value)
-        return Assignment(node.variableName, value)
+        val target = buildExpression(node.target)
+        return Assignment(target, value)
     }
     
     fun buildStatementList(node: StatementListNode): StatementList {
