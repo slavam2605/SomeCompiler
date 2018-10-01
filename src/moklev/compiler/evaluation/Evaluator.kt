@@ -32,7 +32,14 @@ class Evaluator {
             return evaluateDoubleConstant(expression)
         if (expression is Int64BinaryOperation)
             return evaluateInt64BinaryOperation(expression)
+        if (expression is VariableReference)
+            return evaluateVariableReference(expression)
         throw EvaluationException(expression, "Unknown semantic expression: $expression")
+    }
+    
+    fun evaluateVariableReference(element: VariableReference): Value {
+        return variableState[element.name]
+                ?: throw EvaluationException(element, "Variable is not initialized: ${element.name}") 
     }
     
     fun evaluateAssignment(element: Assignment) {
