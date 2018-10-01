@@ -1,7 +1,7 @@
 package moklev.compiler.evaluation
 
 import moklev.compiler.exceptions.CompilationException
-import moklev.compiler.semantic.SemanticElement
+import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.impl.DoubleConstant
 import moklev.compiler.semantic.impl.Int64BinaryOperation
 import moklev.compiler.semantic.impl.Int64Constant
@@ -10,14 +10,14 @@ import moklev.compiler.semantic.impl.Int64Constant
  * @author Moklev Vyacheslav
  */
 class Evaluator {
-    fun evaluate(element: SemanticElement): Value {
-        if (element is Int64Constant)
-            return evaluateInt64Constant(element)
-        if (element is DoubleConstant)
-            return evaluateDoubleConstant(element)
-        if (element is Int64BinaryOperation)
-            return evaluateInt64BinaryOperation(element)
-        throw CompilationException(element, "Unknown semantic element: $element")
+    fun evaluateExpression(expression: SemanticExpression): Value {
+        if (expression is Int64Constant)
+            return evaluateInt64Constant(expression)
+        if (expression is DoubleConstant)
+            return evaluateDoubleConstant(expression)
+        if (expression is Int64BinaryOperation)
+            return evaluateInt64BinaryOperation(expression)
+        throw CompilationException(expression, "Unknown semantic expression: $expression")
     }
     
     fun evaluateInt64Constant(element: Int64Constant): Value {
@@ -29,8 +29,8 @@ class Evaluator {
     }
     
     fun evaluateInt64BinaryOperation(element: Int64BinaryOperation): Value {
-        val left = evaluate(element.left)
-        val right = evaluate(element.right)
+        val left = evaluateExpression(element.left)
+        val right = evaluateExpression(element.right)
         return when (element.op) {
             "+" -> Value.Int64(left.int64Value + right.int64Value)
             "==" -> Value.Boolean(left.int64Value == right.int64Value)
