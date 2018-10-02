@@ -3,7 +3,7 @@ Some notes on language and compiler structure
 
 ## AST structure
 Levels of AST node:
-1. **TBD** *Declaration*
+1. Declaration
 2. Statement
 3. Expression
 

@@ -2,6 +2,7 @@ package moklev.compiler.compilation
 
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
+import moklev.compiler.semantic.impl.FunctionDeclaration
 import moklev.compiler.semantic.impl.LocalVariableReference
 import moklev.compiler.types.Type
 
@@ -10,6 +11,7 @@ import moklev.compiler.types.Type
  */
 class SymbolResolver {
     val declaredVariables = mutableListOf(mutableMapOf<String, Type>())
+    val declaredFunctions = mutableMapOf<String, FunctionDeclaration>()
     
     fun resolveSymbol(name: String): SemanticExpression {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
@@ -25,21 +27,19 @@ class SymbolResolver {
             throw CompilationException("Already declared variable: $name")
         lastScope[name] = type
     }
-    
-    fun enterScope() {
-        declaredVariables.add(mutableMapOf())
-    }
-    
-    fun leaveScope() {
-        declaredVariables.removeAt(declaredVariables.lastIndex)
-    }
-    
+
     inline fun <T> withScope(body: () -> T): T {
-        enterScope()
+        declaredVariables.add(mutableMapOf())
         try {
             return body()
         } finally {
-            leaveScope()
+            declaredVariables.removeAt(declaredVariables.lastIndex)
         }
+    }
+    
+    fun declareFunction(declaration: FunctionDeclaration) {
+        if (declaration.name in declaredFunctions)
+            throw CompilationException("Function ${declaration.name} is already defined")
+        declaredFunctions[declaration.name] = declaration
     }
 }

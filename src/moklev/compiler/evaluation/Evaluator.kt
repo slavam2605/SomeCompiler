@@ -1,6 +1,8 @@
 package moklev.compiler.evaluation
 
+import moklev.compiler.compilation.SemanticBuilder
 import moklev.compiler.exceptions.EvaluationException
+import moklev.compiler.exceptions.ReturnException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
@@ -22,6 +24,8 @@ class Evaluator {
             return evaluateWhile(statement)
         if (statement is If)
             return evaluateIf(statement)
+        if (statement is Return)
+            return evaluateReturn(statement)
         if (statement is SemanticExpression)
             return evaluateExpression(statement).let { Unit }
         throw EvaluationException(statement, "Unknown semantic statement: $statement")
@@ -37,6 +41,11 @@ class Evaluator {
         if (expression is LocalVariableReference)
             return evaluateVariableReference(expression)
         throw EvaluationException(expression, "Unknown semantic expression: $expression")
+    }
+    
+    fun evaluateReturn(element: Return) {
+        val value = evaluateExpression(element.value)
+        throw ReturnException(value)
     }
     
     fun evaluateIf(element: If) {

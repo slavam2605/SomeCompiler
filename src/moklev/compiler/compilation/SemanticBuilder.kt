@@ -1,11 +1,11 @@
 package moklev.compiler.compilation
 
 import moklev.compiler.ast.ASTNode
+import moklev.compiler.ast.DeclarationASTNode
 import moklev.compiler.ast.ExpressionASTNode
 import moklev.compiler.ast.StatementASTNode
 import moklev.compiler.ast.impl.*
 import moklev.compiler.exceptions.CompilationException
-import moklev.compiler.semantic.SemanticElement
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
@@ -18,10 +18,16 @@ class SemanticBuilder {
     val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
     
-    fun build(root: ASTNode): SemanticElement {
-        if (root is StatementASTNode)
-            return buildStatement(root)
-        throw CompilationException(root, "Unknown ASTNode: $root")
+    fun build(root: ASTNode) {
+        if (root is DeclarationListNode)
+            buildDeclarationList(root)
+        throw CompilationException(root, "Unknown top level ASTNode: $root")
+    }
+    
+    fun buildDeclaration(root: DeclarationASTNode) {
+        if (root is FunctionDeclarationNode)
+            return buildFunctionDeclaration(root)
+        throw CompilationException(root, "Not a declaration ASTNode: $root")
     }
     
     fun buildStatement(root: StatementASTNode): SemanticStatement {
@@ -35,6 +41,8 @@ class SemanticBuilder {
             return buildWhile(root)
         if (root is IfNode)
             return buildIf(root)
+        if (root is ReturnNode)
+            return buildReturn(root)
         if (root is ExpressionASTNode)
             return buildExpression(root)
         throw CompilationException(root, "Not a statement ASTNode: $root")
@@ -49,7 +57,25 @@ class SemanticBuilder {
             return buildSymbol(root)
         throw CompilationException(root, "Not an expression ASTNode: $root")
     }
- 
+    
+    fun buildReturn(node: ReturnNode): SemanticStatement {
+        val value = buildExpression(node.value)
+        return Return(value)
+    }
+    
+    fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
+        val parameters = node.parameters.map { (name, type) -> name to typeResolver.resolveType(type) }
+        val returnType = typeResolver.resolveType(node.returnType)
+        val body = buildStatement(node.body)
+        val declaration = FunctionDeclaration(node.name, parameters, returnType, body)
+        symbolResolver.declareFunction(declaration)
+    }
+    
+    fun buildDeclarationList(node: DeclarationListNode) {
+        for (declaration in node.declarations)
+            buildDeclaration(declaration)
+    }
+    
     fun buildIf(node: IfNode): SemanticStatement {
         val condition = buildExpression(node.condition)
         if (condition.type != ScalarType.BOOLEAN)
