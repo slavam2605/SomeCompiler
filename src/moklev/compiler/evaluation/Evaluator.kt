@@ -1,6 +1,5 @@
 package moklev.compiler.evaluation
 
-import moklev.compiler.compilation.SemanticBuilder
 import moklev.compiler.exceptions.EvaluationException
 import moklev.compiler.exceptions.ReturnException
 import moklev.compiler.semantic.SemanticExpression
@@ -40,7 +39,27 @@ class Evaluator {
             return evaluateInt64BinaryOperation(expression)
         if (expression is LocalVariableReference)
             return evaluateVariableReference(expression)
+        if (expression is Invocation)
+            return evaluateInvocation(expression)
         throw EvaluationException(expression, "Unknown semantic expression: $expression")
+    }
+    
+    fun evaluateInvocation(element: Invocation): Value {
+        try {
+            val target = element.target as FunctionReference
+            val parameters = element.parameters.map { evaluateExpression(it) }
+            Evaluator().apply {
+                withScope {
+                    parameters.forEachIndexed { i, value ->
+                        initializeLocalVariable(target.declaration.parameters[i].first, value)
+                    }
+                    evaluateStatement(target.declaration.body)
+                }
+            }
+            throw EvaluationException(element, "Function ${target.declaration.name} returned no value")
+        } catch (e: ReturnException) {
+            return e.value
+        }
     }
     
     fun evaluateReturn(element: Return) {
@@ -119,5 +138,10 @@ class Evaluator {
         } finally {
             variableState.removeAt(variableState.lastIndex)
         }
+    }
+    
+    private fun initializeLocalVariable(name: String, value: Value) {
+        val scope = variableState.last()
+        scope[name] = value
     }
 }

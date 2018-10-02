@@ -1,5 +1,6 @@
 package moklev.compiler.semantic
 
+import moklev.compiler.compilation.SemanticBuilder
 import moklev.compiler.types.Type
 
 /**

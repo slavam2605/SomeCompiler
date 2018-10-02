@@ -20,7 +20,7 @@ class SemanticBuilder {
     
     fun build(root: ASTNode) {
         if (root is DeclarationListNode)
-            buildDeclarationList(root)
+            return buildDeclarationList(root)
         throw CompilationException(root, "Unknown top level ASTNode: $root")
     }
     
@@ -55,7 +55,17 @@ class SemanticBuilder {
             return buildBinaryOperation(root)
         if (root is SymbolNode)
             return buildSymbol(root)
+        if (root is InvocationNode)
+            return buildInvocation(root)
         throw CompilationException(root, "Not an expression ASTNode: $root")
+    }
+    
+    fun buildInvocation(node: InvocationNode): SemanticExpression {
+        val target = buildExpression(node.target)
+        if (target !is FunctionReference)
+            throw CompilationException(node, "Invocation target is not a function reference: $target")
+        val parameters = node.parameters.map { buildExpression(it) }
+        return Invocation(target, parameters)
     }
     
     fun buildReturn(node: ReturnNode): SemanticStatement {
@@ -66,7 +76,12 @@ class SemanticBuilder {
     fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
         val parameters = node.parameters.map { (name, type) -> name to typeResolver.resolveType(type) }
         val returnType = typeResolver.resolveType(node.returnType)
-        val body = buildStatement(node.body)
+        val body = symbolResolver.withScope {
+            parameters.forEach { (name, type) ->
+                symbolResolver.declareVariable(name, type)
+            }
+            buildStatement(node.body)
+        }
         val declaration = FunctionDeclaration(node.name, parameters, returnType, body)
         symbolResolver.declareFunction(declaration)
     }

@@ -11,6 +11,8 @@ Levels of AST node:
 Kinds of symbols in order of resolution:
 1. **Local variable**
 Structured in nested scopes.
+2. **Function**
+Resolves to a function reference.
 
 ## Type system
 Basic types:

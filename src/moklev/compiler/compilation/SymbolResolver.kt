@@ -3,6 +3,7 @@ package moklev.compiler.compilation
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.impl.FunctionDeclaration
+import moklev.compiler.semantic.impl.FunctionReference
 import moklev.compiler.semantic.impl.LocalVariableReference
 import moklev.compiler.types.Type
 
@@ -17,6 +18,9 @@ class SymbolResolver {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
             val declaredType = scope[name] ?: return@forEachIndexed
             return LocalVariableReference(name, declaredType, scopeIndex)
+        }
+        declaredFunctions[name]?.let { declaredFunction ->
+            return FunctionReference(declaredFunction)
         }
         throw CompilationException("Unresolved symbol: $name")
     }
