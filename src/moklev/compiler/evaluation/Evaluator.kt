@@ -125,6 +125,7 @@ class Evaluator {
         val right = evaluateExpression(element.right)
         return when (element.op) {
             "+" -> Value.Int64(left.int64Value + right.int64Value)
+            "*" -> Value.Int64(left.int64Value * right.int64Value)
             "==" -> Value.Boolean(left.int64Value == right.int64Value)
             "<" -> Value.Boolean(left.int64Value < right.int64Value)
             else -> throw EvaluationException(element, "Unknown op for Int64BinaryOperation: \"${element.op}\"")

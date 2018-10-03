@@ -1,6 +1,7 @@
 lexer grammar SomeLexer;
 
 PLUS:       '+';
+STAR:       '*';
 EQEQ:       '==';
 LESS:       '<';
 LPAREN:     '(';
