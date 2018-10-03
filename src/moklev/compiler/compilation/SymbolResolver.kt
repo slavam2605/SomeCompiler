@@ -46,4 +46,8 @@ class SymbolResolver {
             throw CompilationException("Function ${declaration.name} is already defined")
         declaredFunctions[declaration.name] = declaration
     }
+    
+    fun getFunction(name: String): FunctionDeclaration? {
+        return declaredFunctions[name]
+    }
 }

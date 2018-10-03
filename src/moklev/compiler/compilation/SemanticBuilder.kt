@@ -29,6 +29,12 @@ class SemanticBuilder {
             return buildFunctionDeclaration(root)
         throw CompilationException(root, "Not a declaration ASTNode: $root")
     }
+
+    fun buildDeclarationStub(root: DeclarationASTNode) {
+        if (root is FunctionDeclarationNode)
+            return buildFunctionDeclarationStub(root)
+        throw CompilationException(root, "Not a declaration ASTNode: $root")
+    }
     
     fun buildStatement(root: StatementASTNode): SemanticStatement {
         if (root is AssignmentNode)
@@ -73,20 +79,28 @@ class SemanticBuilder {
         return Return(value)
     }
     
-    fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
+    fun buildFunctionDeclarationStub(node: FunctionDeclarationNode) {
         val parameters = node.parameters.map { (name, type) -> name to typeResolver.resolveType(type) }
         val returnType = typeResolver.resolveType(node.returnType)
+        val declarationStub = FunctionDeclaration(node.name, parameters, returnType)
+        symbolResolver.declareFunction(declarationStub)
+    }
+    
+    fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
+        val stub = symbolResolver.getFunction(node.name)
+            ?: throw CompilationException(node, "No predeclared stub found")
         val body = symbolResolver.withScope {
-            parameters.forEach { (name, type) ->
+            stub.parameters.forEach { (name, type) ->
                 symbolResolver.declareVariable(name, type)
             }
             buildStatement(node.body)
         }
-        val declaration = FunctionDeclaration(node.name, parameters, returnType, body)
-        symbolResolver.declareFunction(declaration)
+        stub.complete(body)
     }
     
     fun buildDeclarationList(node: DeclarationListNode) {
+        for (declaration in node.declarations)
+            buildDeclarationStub(declaration)
         for (declaration in node.declarations)
             buildDeclaration(declaration)
     }
