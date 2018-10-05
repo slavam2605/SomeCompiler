@@ -2,49 +2,15 @@ package moklev.compiler.evaluation
 
 import moklev.compiler.exceptions.EvaluationException
 import moklev.compiler.exceptions.ReturnException
-import moklev.compiler.semantic.SemanticExpression
-import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
 
 /**
  * @author Moklev Vyacheslav
  */
-class Evaluator {
+class Evaluator : SomeEvaluator {
     val variableState = mutableListOf(mutableMapOf<String, Value>())
     
-    fun evaluateStatement(statement: SemanticStatement) {
-        if (statement is Assignment)
-            return evaluateAssignment(statement)
-        if (statement is StatementList)
-            return evaluateStatementList(statement)
-        if (statement is VariableDeclaration)
-            return evaluateVariableDeclaration(statement)
-        if (statement is While)
-            return evaluateWhile(statement)
-        if (statement is If)
-            return evaluateIf(statement)
-        if (statement is Return)
-            return evaluateReturn(statement)
-        if (statement is SemanticExpression)
-            return evaluateExpression(statement).let { Unit }
-        throw EvaluationException(statement, "Unknown semantic statement: $statement")
-    }
-    
-    fun evaluateExpression(expression: SemanticExpression): Value {
-        if (expression is Int64Constant)
-            return evaluateInt64Constant(expression)
-        if (expression is DoubleConstant)
-            return evaluateDoubleConstant(expression)
-        if (expression is Int64BinaryOperation)
-            return evaluateInt64BinaryOperation(expression)
-        if (expression is LocalVariableReference)
-            return evaluateVariableReference(expression)
-        if (expression is Invocation)
-            return evaluateInvocation(expression)
-        throw EvaluationException(expression, "Unknown semantic expression: $expression")
-    }
-    
-    fun evaluateInvocation(element: Invocation): Value {
+    override fun evaluateInvocation(element: Invocation): Value {
         try {
             val target = element.target as FunctionReference
             val parameters = element.parameters.map { evaluateExpression(it) }
@@ -61,13 +27,13 @@ class Evaluator {
             return e.value
         }
     }
-    
-    fun evaluateReturn(element: Return) {
+
+    override fun evaluateReturn(element: Return) {
         val value = evaluateExpression(element.value)
         throw ReturnException(value)
     }
-    
-    fun evaluateIf(element: If) {
+
+    override fun evaluateIf(element: If) {
         val condition = { evaluateExpression(element.condition).booleanValue }
         if (condition()) {
             withScope {
@@ -79,8 +45,8 @@ class Evaluator {
             }
         }
     }
-    
-    fun evaluateWhile(element: While) {
+
+    override fun evaluateWhile(element: While) {
         val condition = { evaluateExpression(element.condition).booleanValue }
         while (condition()) {
             withScope {
@@ -88,13 +54,13 @@ class Evaluator {
             }
         }
     }
-    
-    fun evaluateVariableReference(element: LocalVariableReference): Value {
+
+    override fun evaluateLocalVariableReference(element: LocalVariableReference): Value {
         return variableState[variableState.lastIndex - element.scopeLevel][element.name]
                 ?: throw EvaluationException(element, "Variable is not initialized: ${element.name}") 
     }
-    
-    fun evaluateAssignment(element: Assignment) {
+
+    override fun evaluateAssignment(element: Assignment) {
         val value = evaluateExpression(element.value)
         val target = element.target
         if (target !is LocalVariableReference)
@@ -103,24 +69,24 @@ class Evaluator {
             throw EvaluationException(element, "Type mismatch: ${value.type} and ${target.type}")
         variableState[variableState.lastIndex - target.scopeLevel][target.name] = value
     }
-    
-    fun evaluateStatementList(element: StatementList) {
+
+    override fun evaluateStatementList(element: StatementList) {
         element.statements.forEach { statement ->
             evaluateStatement(statement)
         }
     }
-    
-    fun evaluateVariableDeclaration(element: VariableDeclaration) = Unit
-    
-    fun evaluateInt64Constant(element: Int64Constant): Value {
+
+    override fun evaluateVariableDeclaration(element: VariableDeclaration) = Unit
+
+    override fun evaluateInt64Constant(element: Int64Constant): Value {
         return Value.Int64(element.value)
     }
-    
-    fun evaluateDoubleConstant(element: DoubleConstant): Value {
+
+    override fun evaluateDoubleConstant(element: DoubleConstant): Value {
         return Value.Double(element.value)
     }
-    
-    fun evaluateInt64BinaryOperation(element: Int64BinaryOperation): Value {
+
+    override fun evaluateInt64BinaryOperation(element: Int64BinaryOperation): Value {
         val left = evaluateExpression(element.left)
         val right = evaluateExpression(element.right)
         return when (element.op) {
@@ -132,7 +98,13 @@ class Evaluator {
             else -> throw EvaluationException(element, "Unknown op for Int64BinaryOperation: \"${element.op}\"")
         }
     }
-    
+
+    override fun evaluateFunctionDeclaration(element: FunctionDeclaration) = Unit
+
+    override fun evaluateFunctionReference(element: FunctionReference): Value {
+        throw EvaluationException(element, "Function reference can't be used as a value")
+    }
+
     private inline fun <T> withScope(body: () -> T): T {
         variableState.add(mutableMapOf())
         try {
