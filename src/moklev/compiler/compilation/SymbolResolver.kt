@@ -2,9 +2,12 @@ package moklev.compiler.compilation
 
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
+import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.FunctionDeclaration
 import moklev.compiler.semantic.impl.FunctionReference
 import moklev.compiler.semantic.impl.LocalVariableReference
+import moklev.compiler.types.ArrayPointerType
+import moklev.compiler.types.ScalarType
 import moklev.compiler.types.Type
 
 /**
@@ -13,6 +16,21 @@ import moklev.compiler.types.Type
 class SymbolResolver {
     val declaredVariables = mutableListOf(mutableMapOf<String, Type>())
     val declaredFunctions = mutableMapOf<String, FunctionDeclaration>()
+    val predefinedFunctions = mutableMapOf<String, FunctionDeclaration>()
+    
+    init {
+        addPredefinedFunction(
+                "createInt64Array", 
+                listOf("n" to ScalarType.INT64), 
+                ArrayPointerType(ScalarType.INT64)
+        )
+    }
+    
+    private fun addPredefinedFunction(name: String, parameters: List<Pair<String, Type>>, returnType: Type) {
+        predefinedFunctions[name] = FunctionDeclaration(name, parameters, returnType).apply { 
+            complete(SemanticStatement.Stub)
+        }
+    }
     
     fun resolveSymbol(name: String): SemanticExpression {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
@@ -21,6 +39,9 @@ class SymbolResolver {
         }
         declaredFunctions[name]?.let { declaredFunction ->
             return FunctionReference(declaredFunction)
+        }
+        predefinedFunctions[name]?.let { predefinedFunction ->
+            return FunctionReference(predefinedFunction)
         }
         throw CompilationException("Unresolved symbol: $name")
     }
@@ -45,9 +66,5 @@ class SymbolResolver {
         if (declaration.name in declaredFunctions)
             throw CompilationException("Function ${declaration.name} is already defined")
         declaredFunctions[declaration.name] = declaration
-    }
-    
-    fun getFunction(name: String): FunctionDeclaration? {
-        return declaredFunctions[name]
     }
 }

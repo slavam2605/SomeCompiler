@@ -3,6 +3,7 @@ package moklev.compiler.evaluation
 import moklev.compiler.exceptions.EvaluationException
 import moklev.compiler.exceptions.ReturnException
 import moklev.compiler.semantic.SemanticExpression
+import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
 import moklev.compiler.types.Type
 
@@ -40,18 +41,26 @@ class Evaluator : SomeEvaluator {
         return target.read()
     }
 
+    private fun invokeFunction(target: FunctionReference, parameters: List<Value>) {
+        if (target.declaration.body === SemanticStatement.Stub) {
+            val result = Predefined.invokeFunction(target.declaration.name, parameters)
+            throw ReturnException(result)
+        } 
+        Evaluator().apply {
+            withScope {
+                parameters.forEachIndexed { i, value ->
+                    initializeLocalVariable(target.declaration.parameters[i].first, value)
+                }
+                evaluateStatement(target.declaration.body)
+            }
+        }
+    }
+    
     override fun evaluateInvocation(element: Invocation): Value {
         try {
             val target = element.target as FunctionReference
             val parameters = element.parameters.map { evaluateExpression(it) }
-            Evaluator().apply {
-                withScope {
-                    parameters.forEachIndexed { i, value ->
-                        initializeLocalVariable(target.declaration.parameters[i].first, value)
-                    }
-                    evaluateStatement(target.declaration.body)
-                }
-            }
+            invokeFunction(target, parameters)
             throw EvaluationException(element, "Function ${target.declaration.name} returned no value")
         } catch (e: ReturnException) {
             return e.value

@@ -13,6 +13,8 @@ Kinds of symbols in order of resolution:
 Structured in nested scopes.
 2. **Function**
 Resolves to a function reference.
+3. **Predefined function**
+Same as function
 
 ## Type system
 * Basic types:

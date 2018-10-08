@@ -73,8 +73,8 @@ class SemanticBuilder : SomeBuilder {
     }
 
     override fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
-        val stub = symbolResolver.getFunction(node.name)
-            ?: throw CompilationException(node, "No predeclared stub found")
+        val stub = symbolResolver.declaredFunctions[node.name] 
+                ?: throw CompilationException(node, "No predeclared stub found") 
         val body = symbolResolver.withScope {
             stub.parameters.forEach { (name, type) ->
                 symbolResolver.declareVariable(name, type)
