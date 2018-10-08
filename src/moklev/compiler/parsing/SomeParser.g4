@@ -47,6 +47,7 @@ statement returns [StatementASTNode result]
         { $result = new WhileNode($cond.result, $body.result); }
     | 'return' value=expression ';' { $result = new ReturnNode($value.result); }
     | 'var' name=IDENT ':' typeName=type ';' { $result = new VariableDeclarationNode($name.text, $typeName.result); }
+    | expr=expression ';' { $result = $expr.result; }
     ;
     
 expressionList returns [List<ExpressionASTNode> result]
@@ -66,6 +67,7 @@ expression returns [ExpressionASTNode result]
     | '*' target=expression { $result = new DereferenceNode($target.result); }
     | '&' target=expression { $result = new AddressOfNode($target.result); }
     | target=expression '(' list=expressionList ')' { $result = new InvocationNode($target.result, $list.result); }
+    | '(' expr=expression ')' { $result = $expr.result; }
     | left=expression op='*' right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('+' | '-') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('==' | '<') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
@@ -78,4 +80,5 @@ parameter
 type returns [TypeASTNode result]
     : scalarType=IDENT { $result = new ScalarTypeNode($scalarType.text); }
     | sourceType=type '*' { $result = new PointerTypeNode($sourceType.result); }
+    | sourceType=type '[' ']' { $result = new ArrayPointerTypeNode($sourceType.result); }
     ;

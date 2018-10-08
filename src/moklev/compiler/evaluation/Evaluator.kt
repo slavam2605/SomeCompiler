@@ -11,7 +11,13 @@ import moklev.compiler.types.Type
  */
 class Evaluator : SomeEvaluator {
     val variableState = mutableListOf(mutableMapOf<String, Value>())
-    
+
+    override fun evaluateArrayPointerShiftOperation(element: ArrayPointerShiftOperation): Value {
+        val arrayPointer = evaluateExpression(element.arrayPointer) as Value.ArrayPointer 
+        val shift = evaluateExpression(element.shift)
+        return arrayPointer.shift(shift.int64Value)
+    }
+
     override fun evaluateAddressOf(element: AddressOf): Value {
         return object : Value.Pointer() {
             override val sourceType: Type

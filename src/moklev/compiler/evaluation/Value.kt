@@ -1,5 +1,6 @@
 package moklev.compiler.evaluation
 
+import moklev.compiler.types.ArrayPointerType
 import moklev.compiler.types.PointerType
 import moklev.compiler.types.ScalarType
 import moklev.compiler.types.Type
@@ -16,6 +17,9 @@ sealed class Value {
         abstract fun write(value: Value)
         abstract fun read(): Value
     }
+    abstract class ArrayPointer : Pointer() {
+        abstract fun shift(count: Long): ArrayPointer
+    }
     
     val int64Value: kotlin.Long
         get() = (this as Int64).value
@@ -31,6 +35,7 @@ sealed class Value {
             is Int64 -> ScalarType.INT64
             is Double -> ScalarType.DOUBLE
             is Boolean -> ScalarType.BOOLEAN
+            is ArrayPointer -> ArrayPointerType(sourceType)
             is Pointer -> PointerType(sourceType)
         }
     
@@ -39,6 +44,7 @@ sealed class Value {
             is Int64 -> "Int64[$value]"
             is Double -> "Double[$value]"
             is Boolean -> "Boolean[$value]"
+            is ArrayPointer -> "ArrayPointer[?]"
             is Pointer -> "Pointer[?]"
         }
     }

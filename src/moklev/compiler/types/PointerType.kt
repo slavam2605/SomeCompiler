@@ -3,11 +3,11 @@ package moklev.compiler.types
 /**
  * @author Moklev Vyacheslav
  */
-class PointerType(val sourceType: Type) : Type {
+open class PointerType(val sourceType: Type) : Type {
     override fun equals(other: Any?): Boolean {
-        if (other !is PointerType)
+        if (javaClass != other?.javaClass)
             return false
-        return other.sourceType == sourceType
+        return (other as PointerType).sourceType == sourceType
     }
 
     override fun hashCode(): Int {

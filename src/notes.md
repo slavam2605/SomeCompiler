@@ -19,4 +19,5 @@ Resolves to a function reference.
    * `Int64`
    * `Double`
    * `Boolean`
-* Pointer types: _T*_
+* Pointer types: `T*`
+   * Array pointer types: `T[]` _(additionally allows shifts)_

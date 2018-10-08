@@ -14,6 +14,8 @@ LBRACE:     '{';
 RBRACE:     '}';
 EQUALS:     '=';
 SEMICOLON:  ';';
+LSQBRACKET: '[';
+RSQBRACKET: ']';
 
 IF:         'if';
 WHILE:      'while';

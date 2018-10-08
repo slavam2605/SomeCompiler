@@ -6,6 +6,7 @@ import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
+import moklev.compiler.types.ArrayPointerType
 import moklev.compiler.types.PointerType
 import moklev.compiler.types.ScalarType
 import moklev.compiler.types.Type
@@ -29,6 +30,11 @@ class SemanticBuilder : SomeBuilder {
         if (target.type is PointerType)
             return Dereference(target)
         throw CompilationException(node, "Can dereference only pointer type, found: $target")
+    }
+
+    override fun buildArrayPointerType(node: ArrayPointerTypeNode): Type {
+        val sourceType = buildType(node.sourceType)
+        return ArrayPointerType(sourceType)
     }
 
     override fun buildPointerType(node: PointerTypeNode): Type {
@@ -142,6 +148,9 @@ class SemanticBuilder : SomeBuilder {
     override fun buildBinaryOperation(node: BinaryOperationNode): SemanticExpression {
         val left = buildExpression(node.left)
         val right = buildExpression(node.right)
+        if (left.type is ArrayPointerType && right.type == ScalarType.INT64) {
+            return ArrayPointerShiftOperation(node.op, left, right)
+        }
         if (left.type != right.type)
             throw CompilationException(node, "Types of left and right operands are different: ${left.type} and ${right.type}")
         when (left.type) {
