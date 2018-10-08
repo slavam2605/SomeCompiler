@@ -2,6 +2,7 @@ lexer grammar SomeLexer;
 
 PLUS:       '+';
 STAR:       '*';
+AMPERSAND:  '&';
 MINUS:      '-';
 EQEQ:       '==';
 LESS:       '<';

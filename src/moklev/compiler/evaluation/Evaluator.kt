@@ -2,7 +2,9 @@ package moklev.compiler.evaluation
 
 import moklev.compiler.exceptions.EvaluationException
 import moklev.compiler.exceptions.ReturnException
+import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.impl.*
+import moklev.compiler.types.Type
 
 /**
  * @author Moklev Vyacheslav
@@ -10,6 +12,28 @@ import moklev.compiler.semantic.impl.*
 class Evaluator : SomeEvaluator {
     val variableState = mutableListOf(mutableMapOf<String, Value>())
     
+    override fun evaluateAddressOf(element: AddressOf): Value {
+        return object : Value.Pointer() {
+            override val sourceType: Type
+                get() = element.target.type
+
+            override fun write(value: Value) {
+                assign(element.target, value)
+            }
+
+            override fun read(): Value {
+                return evaluateExpression(element.target)
+            }
+        }
+    }
+
+    override fun evaluateDereference(element: Dereference): Value {
+        val target = evaluateExpression(element.target)
+        if (target !is Value.Pointer)
+            throw EvaluationException(element, "Can't dereference a non-pointer value: $target")
+        return target.read()
+    }
+
     override fun evaluateInvocation(element: Invocation): Value {
         try {
             val target = element.target as FunctionReference
@@ -62,14 +86,29 @@ class Evaluator : SomeEvaluator {
 
     override fun evaluateAssignment(element: Assignment) {
         val value = evaluateExpression(element.value)
-        val target = element.target
-        if (target !is LocalVariableReference)
-            throw EvaluationException(element, "Left side of expression is not an assignable expression: $target")
-        if (value.type != target.type)
-            throw EvaluationException(element, "Type mismatch: ${value.type} and ${target.type}")
-        variableState[variableState.lastIndex - target.scopeLevel][target.name] = value
+        assign(element.target, value)
     }
 
+    private fun assign(target: SemanticExpression, value: Value) {
+        if (value.type != target.type)
+            throw EvaluationException("Type mismatch: ${value.type} and ${target.type}")
+        when (target) {
+            is LocalVariableReference -> assignLocalVariable(target, value)
+            is Dereference -> assignDereference(target, value)
+            else -> throw EvaluationException("Left side of expression is not an assignable expression: $target")
+        }
+    }
+    
+    private fun assignDereference(target: Dereference, value: Value) {
+        val innerTarget = evaluateExpression(target.target) as? Value.Pointer 
+                ?: throw EvaluationException("Can't write to dereference of a non-pointer value")
+        innerTarget.write(value)
+    }
+    
+    private fun assignLocalVariable(target: LocalVariableReference, value: Value) {
+        variableState[variableState.lastIndex - target.scopeLevel][target.name] = value
+    }
+    
     override fun evaluateStatementList(element: StatementList) {
         element.statements.forEach { statement ->
             evaluateStatement(statement)

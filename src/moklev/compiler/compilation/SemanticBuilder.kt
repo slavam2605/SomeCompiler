@@ -17,6 +17,20 @@ class SemanticBuilder : SomeBuilder {
     val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
 
+    override fun buildAddressOf(node: AddressOfNode): SemanticExpression {
+        val target = buildExpression(node.target)
+        if (target is LocalVariableReference)
+            return AddressOf(target)
+        throw CompilationException(node, "Can't compile getting address of $target")
+    }
+
+    override fun buildDereference(node: DereferenceNode): SemanticExpression {
+        val target = buildExpression(node.target)
+        if (target.type is PointerType)
+            return Dereference(target)
+        throw CompilationException(node, "Can dereference only pointer type, found: $target")
+    }
+
     override fun buildPointerType(node: PointerTypeNode): Type {
         val sourceType = buildType(node.sourceType)
         return PointerType(sourceType)

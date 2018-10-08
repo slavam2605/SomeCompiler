@@ -63,6 +63,8 @@ expressionList returns [List<ExpressionASTNode> result]
 expression returns [ExpressionASTNode result]
     : name=IDENT { $result = new SymbolNode($name.text); }
     | value=NUMBER { $result = new ConstantNode($value.text); }
+    | '*' target=expression { $result = new DereferenceNode($target.result); }
+    | '&' target=expression { $result = new AddressOfNode($target.result); }
     | target=expression '(' list=expressionList ')' { $result = new InvocationNode($target.result, $list.result); }
     | left=expression op='*' right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('+' | '-') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
