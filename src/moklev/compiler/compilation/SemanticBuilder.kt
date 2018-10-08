@@ -6,7 +6,9 @@ import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
+import moklev.compiler.types.PointerType
 import moklev.compiler.types.ScalarType
+import moklev.compiler.types.Type
 
 /**
  * @author Moklev Vyacheslav
@@ -14,6 +16,15 @@ import moklev.compiler.types.ScalarType
 class SemanticBuilder : SomeBuilder {
     val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
+
+    override fun buildPointerType(node: PointerTypeNode): Type {
+        val sourceType = buildType(node.sourceType)
+        return PointerType(sourceType)
+    }
+
+    override fun buildScalarType(node: ScalarTypeNode): Type {
+        return typeResolver.resolveType(node.name)
+    }
 
     fun buildDeclarationStub(root: DeclarationASTNode) {
         if (root is FunctionDeclarationNode)
@@ -35,8 +46,8 @@ class SemanticBuilder : SomeBuilder {
     }
     
     fun buildFunctionDeclarationStub(node: FunctionDeclarationNode) {
-        val parameters = node.parameters.map { (name, type) -> name to typeResolver.resolveType(type) }
-        val returnType = typeResolver.resolveType(node.returnType)
+        val parameters = node.parameters.map { (name, type) -> name to buildType(type) }
+        val returnType = buildType(node.returnType)
         val declarationStub = FunctionDeclaration(node.name, parameters, returnType)
         symbolResolver.declareFunction(declarationStub)
     }
@@ -99,7 +110,7 @@ class SemanticBuilder : SomeBuilder {
     }
 
     override fun buildVariableDeclaration(node: VariableDeclarationNode): VariableDeclaration {
-        val type = typeResolver.resolveType(node.type)
+        val type = buildType(node.type)
         symbolResolver.declareVariable(node.name, type)
         return VariableDeclaration(node.name, type)
     }

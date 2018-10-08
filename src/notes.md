@@ -15,7 +15,8 @@ Structured in nested scopes.
 Resolves to a function reference.
 
 ## Type system
-Basic types:
-* `Int64`
-* `Double`
-* `Boolean`
+* Basic types:
+   * `Int64`
+   * `Double`
+   * `Boolean`
+* Pointer types: _T*_

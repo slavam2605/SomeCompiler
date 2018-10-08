@@ -19,11 +19,11 @@ declaration returns [DeclarationASTNode result]
     ;
     
 functionDeclaration returns [FunctionDeclarationNode result]
-    : 'fun' name=IDENT '(' (| list+=parameter (',' list+=parameter)* ) ')' ':' returnType=IDENT '{' body=statementList '}'
+    : 'fun' name=IDENT '(' (| list+=parameter (',' list+=parameter)* ) ')' ':' returnType=type '{' body=statementList '}'
         { $result = new FunctionDeclarationNode(
             $name.text, 
-            $list.stream().map(x -> new kotlin.Pair<>(x.name.getText(), x.type.getText())).collect(Collectors.toList()),
-            $returnType.text,
+            $list.stream().map(x -> new kotlin.Pair<>(x.name.getText(), x.typeName.result)).collect(Collectors.toList()),
+            $returnType.result,
             $body.result
           ); 
         }
@@ -46,7 +46,7 @@ statement returns [StatementASTNode result]
     | 'while' '(' cond=expression ')' '{' body=statementList '}'
         { $result = new WhileNode($cond.result, $body.result); }
     | 'return' value=expression ';' { $result = new ReturnNode($value.result); }
-    | 'var' name=IDENT ':' type=IDENT ';' { $result = new VariableDeclarationNode($name.text, $type.text); }
+    | 'var' name=IDENT ':' typeName=type ';' { $result = new VariableDeclarationNode($name.text, $typeName.result); }
     ;
     
 expressionList returns [List<ExpressionASTNode> result]
@@ -70,5 +70,10 @@ expression returns [ExpressionASTNode result]
     ; 
     
 parameter
-    : name=IDENT ':' type=IDENT
+    : name=IDENT ':' typeName=type
+    ;
+
+type returns [TypeASTNode result]
+    : scalarType=IDENT { $result = new ScalarTypeNode($scalarType.text); }
+    | sourceType=type '*' { $result = new PointerTypeNode($sourceType.result); }
     ;

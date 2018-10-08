@@ -13,7 +13,8 @@ fun main(args: Array<String>) {
             exceptionName = "CompilationException",
             interfaceMap = mapOf(
                     "StatementASTNode" to "SemanticStatement",
-                    "ExpressionASTNode" to "SemanticExpression"
+                    "ExpressionASTNode" to "SemanticExpression",
+                    "TypeASTNode" to "Type"
             ),
             onlyImplInterfaces = setOf("ASTNode"),
             targetPackage = "moklev.compiler.compilation",
@@ -22,6 +23,7 @@ fun main(args: Array<String>) {
                     "import moklev.compiler.ast.*",
                     "import moklev.compiler.ast.impl.*",
                     "import moklev.compiler.semantic.*",
+                    "import moklev.compiler.types.*",
                     "import moklev.compiler.exceptions.CompilationException"
             ),
             generatedClassName = "SomeBuilder"
