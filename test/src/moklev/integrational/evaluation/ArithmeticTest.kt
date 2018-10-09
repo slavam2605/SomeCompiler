@@ -1,0 +1,60 @@
+package moklev.integrational.evaluation
+
+import moklev.compiler.compilation.SemanticBuilder
+import moklev.compiler.evaluation.Evaluator
+import moklev.compiler.parsing.ParserUtil
+import org.junit.Test
+import java.util.*
+import kotlin.test.assertEquals
+
+/**
+ * @author Moklev Vyacheslav
+ */
+class ArithmeticTest {
+    companion object {
+        const val seed = 7468297228L
+    }
+    
+    private fun runTest(program: String, testExpression: String, expectedResult: String) {
+        val programAst = ParserUtil.parse(program)
+        val expressionAst = ParserUtil.parseExpression(testExpression)
+        val builder = SemanticBuilder()
+        builder.build(programAst)
+        val expression = builder.buildExpression(expressionAst)
+        val result = Evaluator().evaluateExpression(expression).toString()
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun testSimpleArithmetic() {
+        runTest("", "3", "Int64[3]")
+        runTest("", "1 + 2", "Int64[3]")
+        runTest("", "1 - 2", "Int64[-1]")
+        runTest("", "2 * 3", "Int64[6]")
+        runTest("", "2 == 3", "Boolean[false]")
+        runTest("", "3 < 4", "Boolean[true]")
+        runTest("", "1 - (2 - 3)", "Int64[2]")
+    }
+
+    @Test
+    fun testRandomArithmetic() {
+        val random = Random(seed)
+        fun createRandomExpression(depth: Int): Pair<String, Long> {
+            if (depth == 0)
+                return random.nextInt(1000000000).let { it.toString() to it.toLong() }
+            val (left, leftVal) = createRandomExpression(depth - 1)
+            val (right, rightVal) = createRandomExpression(depth - 1)
+            return when (random.nextInt(3)) {
+                0 -> "($left)+($right)" to leftVal + rightVal
+                1 -> "($left)-($right)" to leftVal - rightVal
+                2 -> "($left)*($right)" to leftVal * rightVal
+                else -> throw RuntimeException("Random value is out of bounds")
+            }
+        }
+
+        for (iter in 0 until 1000) {
+            val (expr, value) = createRandomExpression(10)
+            runTest("", expr, "Int64[$value]")
+        }
+    }
+}
