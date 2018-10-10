@@ -95,7 +95,7 @@ class Evaluator : SomeEvaluator {
     }
 
     override fun evaluateLocalVariableReference(element: LocalVariableReference): Value {
-        return variableState[variableState.lastIndex - element.scopeLevel][element.name]
+        return variableState[element.scopeLevel][element.name]
                 ?: throw EvaluationException(element, "Variable is not initialized: ${element.name}") 
     }
 
@@ -121,7 +121,7 @@ class Evaluator : SomeEvaluator {
     }
     
     private fun assignLocalVariable(target: LocalVariableReference, value: Value) {
-        variableState[variableState.lastIndex - target.scopeLevel][target.name] = value
+        variableState[target.scopeLevel][target.name] = value
     }
     
     override fun evaluateStatementList(element: StatementList) {

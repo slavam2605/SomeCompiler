@@ -35,7 +35,8 @@ class SymbolResolver {
     fun resolveSymbol(name: String): SemanticExpression {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
             val declaredType = scope[name] ?: return@forEachIndexed
-            return LocalVariableReference(name, declaredType, scopeIndex)
+            val scopeLevel = declaredVariables.size - scopeIndex - 1
+            return LocalVariableReference(name, declaredType, scopeLevel)
         }
         declaredFunctions[name]?.let { declaredFunction ->
             return FunctionReference(declaredFunction)
