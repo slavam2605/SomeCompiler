@@ -57,4 +57,45 @@ class PointersTest : EvaluationTestBase() {
                 "Int64[100]"
         )
     }
+    
+    @Test
+    fun testCrossFunctionPointer() {
+        runTest(
+                """
+                    fun foo(): int64 {
+                        var x: int64;
+                        bar(&x);
+                        return x;
+                    }
+                    
+                    fun bar(p: int64*): int64 {
+                        *p = 200;
+                        return 0;
+                    }
+                """,
+                "foo()",
+                "Int64[200]"
+        )
+        runTest(
+                """
+                    fun foo(): int64 {
+                        var x: int64;
+                        return bar(&x, 1);
+                    }
+                    
+                    fun bar(p: int64*, mode: int64): int64 {
+                        if (mode == 1) {
+                            var a: int64;
+                            bar(&a, 2);
+                            return a;
+                        } else {
+                            *p = 123;
+                            return 0;
+                        }
+                    }
+                """,
+                "foo()",
+                "Int64[123]"
+        )
+    }
 }
