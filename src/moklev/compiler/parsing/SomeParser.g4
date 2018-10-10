@@ -68,7 +68,7 @@ expression returns [ExpressionASTNode result]
     | '&' target=expression { $result = new AddressOfNode($target.result); }
     | target=expression '(' list=expressionList ')' { $result = new InvocationNode($target.result, $list.result); }
     | '(' expr=expression ')' { $result = $expr.result; }
-    | left=expression op='*' right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
+    | left=expression op=('*' | '/') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('+' | '-') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('==' | '<') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     ; 

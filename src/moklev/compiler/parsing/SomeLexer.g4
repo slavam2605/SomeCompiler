@@ -4,6 +4,7 @@ PLUS:       '+';
 STAR:       '*';
 AMPERSAND:  '&';
 MINUS:      '-';
+SLASH:      '/';
 EQEQ:       '==';
 LESS:       '<';
 LPAREN:     '(';
