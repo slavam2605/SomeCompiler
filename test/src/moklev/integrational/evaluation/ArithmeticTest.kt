@@ -10,19 +10,9 @@ import kotlin.test.assertEquals
 /**
  * @author Moklev Vyacheslav
  */
-class ArithmeticTest {
+class ArithmeticTest : EvaluationTestBase() {
     companion object {
         const val seed = 7468297228L
-    }
-    
-    private fun runTest(program: String, testExpression: String, expectedResult: String) {
-        val programAst = ParserUtil.parse(program)
-        val expressionAst = ParserUtil.parseExpression(testExpression)
-        val builder = SemanticBuilder()
-        builder.build(programAst)
-        val expression = builder.buildExpression(expressionAst)
-        val result = Evaluator().evaluateExpression(expression).toString()
-        assertEquals(expectedResult, result)
     }
 
     @Test
