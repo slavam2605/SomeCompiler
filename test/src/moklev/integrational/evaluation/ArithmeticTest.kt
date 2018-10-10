@@ -21,6 +21,7 @@ class ArithmeticTest : EvaluationTestBase() {
         runTest("", "1 + 2", "Int64[3]")
         runTest("", "1 - 2", "Int64[-1]")
         runTest("", "2 * 3", "Int64[6]")
+        runTest("", "7 / 3", "Int64[2]")
         runTest("", "2 == 3", "Boolean[false]")
         runTest("", "3 < 4", "Boolean[true]")
         runTest("", "1 - (2 - 3)", "Int64[2]")
@@ -34,10 +35,14 @@ class ArithmeticTest : EvaluationTestBase() {
                 return random.nextInt(1000000000).let { it.toString() to it.toLong() }
             val (left, leftVal) = createRandomExpression(depth - 1)
             val (right, rightVal) = createRandomExpression(depth - 1)
-            return when (random.nextInt(3)) {
+            return when (random.nextInt(4)) {
                 0 -> "($left)+($right)" to leftVal + rightVal
                 1 -> "($left)-($right)" to leftVal - rightVal
                 2 -> "($left)*($right)" to leftVal * rightVal
+                3 -> if (rightVal != 0L)
+                    "($left)/($right)" to leftVal / rightVal
+                else
+                    "($left)/(($right)+1)" to leftVal / (rightVal + 1)
                 else -> throw RuntimeException("Random value is out of bounds")
             }
         }
