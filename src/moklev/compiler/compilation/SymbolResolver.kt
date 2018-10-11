@@ -1,5 +1,8 @@
 package moklev.compiler.compilation
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.FunctionAlreadyDeclaredError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.UnresolvedSymbolError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.VariableAlreadyDeclaredError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
@@ -49,13 +52,13 @@ class SymbolResolver {
         predefinedFunctions[name]?.let { predefinedFunction ->
             return FunctionReference(predefinedFunction)
         }
-        throw CompilationException("Unresolved symbol: $name")
+        throw CompilationException(UnresolvedSymbolError(name))
     }
     
     fun declareVariable(name: String, type: Type) {
         val lastScope = declaredVariables.last()
         if (name in lastScope)
-            throw CompilationException("Already declared variable: $name")
+            throw CompilationException(VariableAlreadyDeclaredError(name))
         lastScope[name] = type
     }
 
@@ -70,7 +73,7 @@ class SymbolResolver {
     
     fun declareFunction(declaration: FunctionDeclaration) {
         if (declaration.name in declaredFunctions)
-            throw CompilationException("Function ${declaration.name} is already defined")
+            throw CompilationException(FunctionAlreadyDeclaredError(declaration.name))
         declaredFunctions[declaration.name] = declaration
     }
 }

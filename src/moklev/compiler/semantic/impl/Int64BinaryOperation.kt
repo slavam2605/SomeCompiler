@@ -1,5 +1,6 @@
 package moklev.compiler.semantic.impl
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.NoSuchBinaryOperationError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.types.ScalarType
@@ -12,6 +13,6 @@ class Int64BinaryOperation(val op: String, val left: SemanticExpression, val rig
     override val type: Type = when (op) {
         "+", "-", "*", "/" -> ScalarType.INT64
         "==", "<" -> ScalarType.BOOLEAN
-        else -> throw CompilationException(this, "Unsupported binary operation for Int64: $op")
+        else -> throw CompilationException(this, NoSuchBinaryOperationError(op, left.type, right.type))
     }
 }

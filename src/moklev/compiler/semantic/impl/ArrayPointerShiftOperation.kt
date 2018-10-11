@@ -1,5 +1,6 @@
 package moklev.compiler.semantic.impl
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.NoSuchBinaryOperationError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.types.Type
@@ -13,7 +14,7 @@ class ArrayPointerShiftOperation(val op: String, val arrayPointer: SemanticExpre
     init {
         when (op) {
             "+", "-" -> type = arrayPointer.type
-            else -> throw CompilationException(this, "Unsupported array pointer shift operation: $op")
+            else -> throw CompilationException(this, NoSuchBinaryOperationError(op, arrayPointer.type, shift.type))
         }
     }
 }

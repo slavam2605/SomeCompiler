@@ -1,5 +1,6 @@
 package moklev.compiler.semantic.impl
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.NoSuchBinaryOperationError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.types.ScalarType
@@ -11,6 +12,6 @@ import moklev.compiler.types.Type
 class BooleanBinaryOperation(val op: String, val left: SemanticExpression, val right: SemanticExpression) : SemanticExpression {
     override val type: Type = when (op) {
         "&&", "||" -> ScalarType.BOOLEAN
-        else -> throw CompilationException(this, "Unsupported binary operation for Boolean: $op")
+        else -> throw CompilationException(this, NoSuchBinaryOperationError(op, left.type, right.type))
     }
 }

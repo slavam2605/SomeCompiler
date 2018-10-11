@@ -1,5 +1,6 @@
 package moklev.compiler.compilation
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.UnresolvedTypeError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.types.ScalarType
 import moklev.compiler.types.Type
@@ -13,7 +14,7 @@ class TypeResolver {
             "int64" -> ScalarType.INT64
             "double" -> ScalarType.DOUBLE
             "boolean" -> ScalarType.BOOLEAN
-            else -> throw CompilationException("Unknown type: \"$name\"")
+            else -> throw CompilationException(UnresolvedTypeError(name))
         }
     }
 }

@@ -2,6 +2,16 @@ package moklev.compiler.compilation
 
 import moklev.compiler.ast.DeclarationASTNode
 import moklev.compiler.ast.impl.*
+import moklev.compiler.compilation.DiagnosticCompilationErrors.AddressOfError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.AssignTypeMismatchError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.DereferenceTypeError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.IfConditionBooleanTypeError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationArgumentTypeMismatchError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationTargetError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationWrongNumberOfArgumentsError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.NoSuchBinaryOperationError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.ReturnTypeMismatchError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.WhileConditionBooleanTypeError
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
@@ -32,14 +42,14 @@ class SemanticBuilder : SomeBuilder {
         val target = buildExpression(node.target)
         if (target is LocalVariableReference)
             return AddressOf(target)
-        throw CompilationException(node, "Can't compile getting address of $target")
+        throw CompilationException(node, AddressOfError(target))
     }
 
     override fun buildDereference(node: DereferenceNode): SemanticExpression {
         val target = buildExpression(node.target)
         if (target.type is PointerType)
             return Dereference(target)
-        throw CompilationException(node, "Can dereference only pointer type, found: $target")
+        throw CompilationException(node, DereferenceTypeError(target.type))
     }
 
     override fun buildArrayPointerType(node: ArrayPointerTypeNode): Type {
@@ -65,13 +75,13 @@ class SemanticBuilder : SomeBuilder {
     override fun buildInvocation(node: InvocationNode): SemanticExpression {
         val target = buildExpression(node.target)
         if (target !is FunctionReference)
-            throw CompilationException(node, "Invocation target is not a function reference: $target")
+            throw CompilationException(node, InvocationTargetError(target))
         val parameters = node.parameters.map { buildExpression(it) }
         if (parameters.size != target.declaration.parameters.size)
-            throw CompilationException(node, "Wrong number of arguments: expected ${target.declaration.parameters.size}, found: ${parameters.size}")
+            throw CompilationException(node, InvocationWrongNumberOfArgumentsError(target.declaration.parameters.size, parameters.size))
         for (index in 0 until parameters.size) {
             if (parameters[index].type != target.declaration.parameters[index].second)
-                throw CompilationException(node, "Invalid type of argument ${index + 1}: expected ${target.declaration.parameters[index].second}, found: ${parameters[index].type}")
+                throw CompilationException(node, InvocationArgumentTypeMismatchError(index, target.declaration.parameters[index].second, parameters[index].type))
         }
         return Invocation(target, parameters)
     }
@@ -81,7 +91,7 @@ class SemanticBuilder : SomeBuilder {
         val function = currentFunction
             ?: throw CompilationException(node, "No current function")
         if (value.type != function.returnType)
-            throw CompilationException(node, "Return type mismatch: function returns ${function.returnType}, found: ${value.type}")
+            throw CompilationException(node, ReturnTypeMismatchError(function.returnType, value.type))
         return Return(value)
     }
     
@@ -116,7 +126,7 @@ class SemanticBuilder : SomeBuilder {
     override fun buildIf(node: IfNode): SemanticStatement {
         val condition = buildExpression(node.condition)
         if (condition.type != ScalarType.BOOLEAN)
-            throw CompilationException(node, "Condition of `if` statement should have Boolean type, found: ${condition.type}")
+            throw CompilationException(node, IfConditionBooleanTypeError(condition.type))
         val bodyTrue = symbolResolver.withScope {
             buildStatement(node.bodyTrue)
         }
@@ -129,7 +139,7 @@ class SemanticBuilder : SomeBuilder {
     override fun buildWhile(node: WhileNode): SemanticStatement {
         val condition = buildExpression(node.condition)
         if (condition.type != ScalarType.BOOLEAN)
-            throw CompilationException(node, "Condition of `while` statement should have Boolean type, found: ${condition.type}")
+            throw CompilationException(node, WhileConditionBooleanTypeError(condition.type))
         val body = symbolResolver.withScope {
             buildStatement(node.body)
         }
@@ -144,7 +154,7 @@ class SemanticBuilder : SomeBuilder {
         val value = buildExpression(node.value)
         val target = buildExpression(node.target)
         if (value.type != target.type)
-            throw CompilationException(node, "Type mismatch: ${value.type} and ${target.type}")
+            throw CompilationException(node, AssignTypeMismatchError(target.type, value.type))
         return Assignment(target, value)
     }
 
@@ -176,11 +186,11 @@ class SemanticBuilder : SomeBuilder {
             return ArrayPointerShiftOperation(node.op, left, right)
         }
         if (left.type != right.type)
-            throw CompilationException(node, "Types of left and right operands are different: ${left.type} and ${right.type}")
+            throw CompilationException(node, NoSuchBinaryOperationError(node.op, left.type, right.type))
         when (left.type) {
             ScalarType.INT64 -> return Int64BinaryOperation(node.op, left, right)
             ScalarType.BOOLEAN -> return BooleanBinaryOperation(node.op, left, right)
-            else -> throw CompilationException(node, "Unknown type of operands: ${left.type}")
+            else -> throw CompilationException(node, NoSuchBinaryOperationError(node.op, left.type, right.type))
         }
     }
 }

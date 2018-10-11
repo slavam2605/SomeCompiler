@@ -1,5 +1,11 @@
 package moklev.intergational.compilation
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.AssignTypeMismatchError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationArgumentTypeMismatchError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationWrongNumberOfArgumentsError
+import moklev.compiler.compilation.DiagnosticCompilationErrors.ReturnTypeMismatchError
+import moklev.compiler.types.ArrayPointerType
+import moklev.compiler.types.ScalarType
 import org.junit.Test
 
 /**
@@ -14,7 +20,7 @@ class TypeCheckTest : CompilationTestBase() {
                 x = 2;
                 return 1;
             }
-        """)
+        """, AssignTypeMismatchError(ArrayPointerType(ScalarType.INT64), ScalarType.INT64))
     }
     
     @Test
@@ -29,7 +35,7 @@ class TypeCheckTest : CompilationTestBase() {
                 x = foo();
                 return 0;
             }
-        """)
+        """, AssignTypeMismatchError(ScalarType.INT64, ArrayPointerType(ScalarType.INT64)))
     }
     
     @Test
@@ -38,7 +44,7 @@ class TypeCheckTest : CompilationTestBase() {
             fun foo(): int64 {
                 return 1 < 2;
             }
-        """)
+        """, ReturnTypeMismatchError(ScalarType.INT64, ScalarType.BOOLEAN))
     }
     
     @Test
@@ -51,7 +57,7 @@ class TypeCheckTest : CompilationTestBase() {
             fun bar(): int64 {
                 return foo(1 < 2);
             }
-        """)
+        """, InvocationArgumentTypeMismatchError(0, ScalarType.INT64, ScalarType.BOOLEAN))
     }
     
     @Test
@@ -64,6 +70,6 @@ class TypeCheckTest : CompilationTestBase() {
             fun bar(): int64 {
                 return foo(1);
             }
-        """)
+        """, InvocationWrongNumberOfArgumentsError(2, 1))
     }
 }
