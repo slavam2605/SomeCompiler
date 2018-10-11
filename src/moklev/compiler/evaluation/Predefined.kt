@@ -11,6 +11,7 @@ object Predefined {
     fun invokeFunction(name: String, parameters: List<Value>): Value {
         return when (name) {
             "createInt64Array" -> createInt64Array(parameters[0])
+            "debugPrint" -> parameters.joinToString().let { println(it); Value.Int64(0) }
             else -> throw EvaluationException("Unknown predefined function: $name")
         }
     }
@@ -32,6 +33,10 @@ object Predefined {
 
         override fun shift(count: Long): ArrayPointer {
             return ArrayPointerToInt64Array(array, index + count)
+        }
+
+        override fun toString(): String {
+            return "ArrayPointer[$index, ${array.contentToString()}]"
         }
     }
 }

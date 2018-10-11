@@ -24,6 +24,11 @@ class SymbolResolver {
                 listOf("n" to ScalarType.INT64), 
                 ArrayPointerType(ScalarType.INT64)
         )
+        addPredefinedFunction(
+                "debugPrint",
+                listOf("x" to ScalarType.INT64),
+                ScalarType.INT64
+        )
     }
     
     private fun addPredefinedFunction(name: String, parameters: List<Pair<String, Type>>, returnType: Type) {
