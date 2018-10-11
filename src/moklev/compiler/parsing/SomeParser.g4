@@ -71,6 +71,8 @@ expression returns [ExpressionASTNode result]
     | left=expression op=('*' | '/') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('+' | '-') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('==' | '<') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
+    | left=expression op='&&' right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
+    | left=expression op='||' right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     ; 
     
 parameter

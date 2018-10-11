@@ -3,6 +3,8 @@ lexer grammar SomeLexer;
 PLUS:       '+';
 STAR:       '*';
 AMPERSAND:  '&';
+ANDAND:     '&&';
+OROR:       '||';
 MINUS:      '-';
 SLASH:      '/';
 EQEQ:       '==';

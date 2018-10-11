@@ -154,7 +154,8 @@ class SemanticBuilder : SomeBuilder {
         if (left.type != right.type)
             throw CompilationException(node, "Types of left and right operands are different: ${left.type} and ${right.type}")
         when (left.type) {
-            ScalarType.INT64 -> return Int64BinaryOperation(node.op, left, right) 
+            ScalarType.INT64 -> return Int64BinaryOperation(node.op, left, right)
+            ScalarType.BOOLEAN -> return BooleanBinaryOperation(node.op, left, right)
             else -> throw CompilationException(node, "Unknown type of operands: ${left.type}")
         }
     }

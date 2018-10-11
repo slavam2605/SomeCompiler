@@ -140,6 +140,16 @@ class Evaluator : SomeEvaluator {
         return Value.Double(element.value)
     }
 
+    override fun evaluateBooleanBinaryOperation(element: BooleanBinaryOperation): Value {
+        val left = lazy { evaluateExpression(element.left) }
+        val right = lazy { evaluateExpression(element.right) }
+        return when (element.op) {
+            "&&" -> if (!left.value.booleanValue) Value.Boolean(false) else right.value 
+            "||" -> if (left.value.booleanValue) Value.Boolean(true) else right.value 
+            else -> throw EvaluationException(element, "Unknown op for BooleanBinaryOperation: \"${element.op}\"")
+        }
+    }
+
     override fun evaluateInt64BinaryOperation(element: Int64BinaryOperation): Value {
         val left = evaluateExpression(element.left)
         val right = evaluateExpression(element.right)
