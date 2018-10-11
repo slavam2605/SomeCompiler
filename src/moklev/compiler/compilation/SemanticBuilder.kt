@@ -17,7 +17,17 @@ import moklev.compiler.types.Type
 class SemanticBuilder : SomeBuilder {
     val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
+    var currentFunction: FunctionDeclaration? = null
 
+    private inline fun <T> withFunction(function: FunctionDeclaration, body: () -> T): T {
+        currentFunction = function
+        try {
+            return body()
+        } finally {
+            currentFunction = null
+        }
+    }
+    
     override fun buildAddressOf(node: AddressOfNode): SemanticExpression {
         val target = buildExpression(node.target)
         if (target is LocalVariableReference)
@@ -57,11 +67,21 @@ class SemanticBuilder : SomeBuilder {
         if (target !is FunctionReference)
             throw CompilationException(node, "Invocation target is not a function reference: $target")
         val parameters = node.parameters.map { buildExpression(it) }
+        if (parameters.size != target.declaration.parameters.size)
+            throw CompilationException(node, "Wrong number of arguments: expected ${target.declaration.parameters.size}, found: ${parameters.size}")
+        for (index in 0 until parameters.size) {
+            if (parameters[index].type != target.declaration.parameters[index].second)
+                throw CompilationException(node, "Invalid type of argument ${index + 1}: expected ${target.declaration.parameters[index].second}, found: ${parameters[index].type}")
+        }
         return Invocation(target, parameters)
     }
 
     override fun buildReturn(node: ReturnNode): SemanticStatement {
         val value = buildExpression(node.value)
+        val function = currentFunction
+            ?: throw CompilationException(node, "No current function")
+        if (value.type != function.returnType)
+            throw CompilationException(node, "Return type mismatch: function returns ${function.returnType}, found: ${value.type}")
         return Return(value)
     }
     
@@ -75,11 +95,13 @@ class SemanticBuilder : SomeBuilder {
     override fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
         val stub = symbolResolver.declaredFunctions[node.name] 
                 ?: throw CompilationException(node, "No predeclared stub found") 
-        val body = symbolResolver.withScope {
-            stub.parameters.forEach { (name, type) ->
-                symbolResolver.declareVariable(name, type)
+        val body = withFunction(stub) {
+            symbolResolver.withScope {
+                stub.parameters.forEach { (name, type) ->
+                    symbolResolver.declareVariable(name, type)
+                }
+                buildStatement(node.body)
             }
-            buildStatement(node.body)
         }
         stub.complete(body)
     }
@@ -121,6 +143,8 @@ class SemanticBuilder : SomeBuilder {
     override fun buildAssignment(node: AssignmentNode): Assignment {
         val value = buildExpression(node.value)
         val target = buildExpression(node.target)
+        if (value.type != target.type)
+            throw CompilationException(node, "Type mismatch: ${value.type} and ${target.type}")
         return Assignment(target, value)
     }
 
