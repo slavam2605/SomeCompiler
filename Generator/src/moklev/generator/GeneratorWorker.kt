@@ -24,7 +24,7 @@ class GeneratorWorker(
         val targetDir: String,
         val headerLines: List<String>,
         val generatedClassName: String
-) {
+) : Worker {
     var rootInterface: String? = null
     val interfaceInheritors = mutableMapOf<String, MutableList<String>>()
     val interfaceImplementations = mutableMapOf<String, MutableList<String>>()
@@ -35,7 +35,7 @@ class GeneratorWorker(
         for (interfaceFile in root.listFiles()) {
             if (!interfaceFile.isFile)
                 continue
-            val tree = parseFile(interfaceFile)
+            val (tree, _) = parseFile(interfaceFile)
             GeneratorVisitor().apply {
                 visit(tree)
                 if (baseClassName == null)
@@ -50,7 +50,7 @@ class GeneratorWorker(
         for (implFile in implRoot.listFiles()) {
             if (!implFile.isFile)
                 continue
-            val tree = parseFile(implFile)
+            val (tree, _) = parseFile(implFile)
             GeneratorVisitor().apply { 
                 visit(tree)
                 val trimmedClassName = trimImpl(className)
@@ -101,13 +101,5 @@ class GeneratorWorker(
         printWriter.print(builder.toString())
         printWriter.print("}")
         printWriter.close()
-    }
-    
-    private fun parseFile(file: File): ParseTree {
-        val stream = CharStreams.fromFileName(file.absolutePath)
-        val kotlinLexer = KotlinLexer(stream)
-        val tokenStream = CommonTokenStream(kotlinLexer)
-        val kotlinParser = KotlinParser(tokenStream)
-        return kotlinParser.kotlinFile()
     }
 }
