@@ -1,4 +1,4 @@
-package moklev.compiler.compilation.analyze
+package moklev.compiler.compilation.analysis
 
 /**
  * @author Moklev Vyacheslav

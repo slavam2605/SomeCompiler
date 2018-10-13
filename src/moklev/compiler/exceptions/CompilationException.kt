@@ -1,7 +1,7 @@
 package moklev.compiler.exceptions
 
 import moklev.compiler.ast.ASTNode
-import moklev.compiler.compilation.analyze.ExpressionAnalysis
+import moklev.compiler.compilation.analysis.ExpressionAnalysis
 import moklev.compiler.semantic.SemanticElement
 
 /**

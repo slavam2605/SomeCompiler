@@ -6,11 +6,15 @@ package moklev.generator
 fun main(args: Array<String>) {
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/ast",
+            pathToSourcesImpl = "src/moklev/compiler/ast/impl",
             trimInterface = { it!!.removeSuffix("ASTNode") },
             trimImpl = { it!!.removeSuffix("Node") },
+            withTypeParameter = false,
+            typeParameterBound = "",
             methodPrefix = "build",
             methodParamName = "node",
             exceptionName = "CompilationException",
+            passElementToException = true,
             interfaceMap = mapOf(
                     "StatementASTNode" to "SemanticStatement",
                     "ExpressionASTNode" to "SemanticExpression",
@@ -31,11 +35,15 @@ fun main(args: Array<String>) {
     
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/semantic",
+            pathToSourcesImpl = "src/moklev/compiler/semantic/impl",
             trimInterface = { it!!.removePrefix("Semantic") },
             trimImpl = { it!! },
+            withTypeParameter = false,
+            typeParameterBound = "",
             methodPrefix = "evaluate",
             methodParamName = "element",
             exceptionName = "EvaluationException",
+            passElementToException = true,
             interfaceMap = mapOf("SemanticExpression" to "Value"),
             onlyImplInterfaces = setOf(),
             targetPackage = "moklev.compiler.evaluation",
@@ -63,17 +71,41 @@ fun main(args: Array<String>) {
             newParamName = "lastAnalysis",
             newParamType = "MonotonicAnalysis",
             headerLines = listOf(
-                    "import moklev.compiler.compilation.analyze.ExpressionAnalysis",
+                    "import moklev.compiler.compilation.analysis.*",
                     "import moklev.compiler.compilation.MonotonicAnalysis",
-                    "import moklev.compiler.compilation.analyze.StatementAnalysis",
                     "import moklev.compiler.semantic.impl.*"
             ),
             transformerHeaderLines = listOf(
                     "import moklev.compiler.compilation.*",
                     "import moklev.compiler.compilation.analysis.impl.*",
-                    "import moklev.compiler.compilation.analyze.*",
+                    "import moklev.compiler.compilation.analysis.*",
                     "import moklev.compiler.semantic.*",
                     "import moklev.compiler.semantic.impl.*"
             )
+    ).run()
+    
+    GeneratorWorker(
+            pathToSources = "src/moklev/compiler/compilation/analysis",
+            pathToSourcesImpl = "gen/moklev/compiler/compilation/analysis/impl",
+            trimInterface = { it!!.removeSuffix("Analysis") },
+            trimImpl = { it!!.removeSuffix("Analysis") },
+            withTypeParameter = true,
+            typeParameterBound = "MonotonicAnalysis",
+            methodPrefix = "analyse",
+            methodParamName = "element",
+            exceptionName = "RuntimeException",
+            passElementToException = false,
+            interfaceMap = mapOf(
+                    "ExpressionAnalysis" to "ExpressionAnalysis",
+                    "StatementAnalysis" to "StatementAnalysis"
+            ),
+            onlyImplInterfaces = setOf(),
+            targetPackage = "moklev.compiler.compilation.analysis",
+            targetDir = "gen",
+            headerLines = listOf(
+                    "import moklev.compiler.compilation.MonotonicAnalysis",
+                    "import moklev.compiler.compilation.analysis.impl.*"
+            ),
+            generatedClassName = "SomeAnalyzer"
     ).run()
 }
