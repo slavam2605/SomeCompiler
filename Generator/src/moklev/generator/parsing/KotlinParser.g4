@@ -75,8 +75,8 @@ delegationSpecifiers
     ;
 
 delegationSpecifier
-    : constructorInvocation
-    | userType
+    : userType
+    | constructorInvocation
     | explicitDelegation
     ;
 

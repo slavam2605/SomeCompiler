@@ -20,6 +20,7 @@ class GeneratorWorker(
         val typeParameterBound: String,
         val methodPrefix: String,
         val methodParamName: String,
+        val additionalParams: List<String>,
         val exceptionName: String,
         val passElementToException: Boolean,
         val interfaceMap: Map<String, String>,
@@ -60,7 +61,7 @@ class GeneratorWorker(
                 val trimmedClassName = trimImpl(className)
                 val returnTypeString = interfaceMap[baseClassName!!]?.let { ": $it" } ?: ""
                 val typeParamString = if (withTypeParameter) "<T>" else ""
-                builder.appendln("\tfun $methodPrefix$trimmedClassName($methodParamName: $className$typeParamString)$returnTypeString")
+                builder.appendln("\tfun $methodPrefix$trimmedClassName($methodParamName: $className$typeParamString${additionalParams.joinToString(separator = "") { ", $it" }})$returnTypeString")
                 builder.appendln()
                 interfaceImplementations.compute(baseClassName!!) { _, list ->
                     list?.apply { add(className!!) } ?: mutableListOf(className!!)
@@ -70,13 +71,13 @@ class GeneratorWorker(
         for ((interfaceName, implementations) in interfaceImplementations) {
             val trimmedInterfaceName = trimInterface(interfaceName)
             val returnTypeString = interfaceMap[interfaceName]?.let { ": $it" } ?: ""
-            builder.appendln("\tfun $methodPrefix$trimmedInterfaceName(root: $interfaceName)$returnTypeString {")
+            builder.appendln("\tfun $methodPrefix$trimmedInterfaceName(root: $interfaceName${additionalParams.joinToString(separator = "") { ", $it" }})$returnTypeString {")
             for (implementation in implementations) {
                 val trimmedImplName = trimImpl(implementation)
                 val typeParamString = if (withTypeParameter) "<*>" else ""
                 val typeParamCast = if (withTypeParameter) " as $implementation<T>" else ""
                 builder.appendln("\t\tif (root is $implementation$typeParamString)")
-                builder.appendln("\t\t\treturn $methodPrefix$trimmedImplName(root$typeParamCast)")
+                builder.appendln("\t\t\treturn $methodPrefix$trimmedImplName(root$typeParamCast${additionalParams.joinToString(separator = "") { ", ${it.split(":")[0]}" }})")
             }
             if (interfaceName !in onlyImplInterfaces) {
                 for (inheritor in interfaceInheritors[interfaceName] ?: emptyList<String>()) {
@@ -86,7 +87,7 @@ class GeneratorWorker(
                     else
                         ""
                     builder.appendln("\t\tif (root is $inheritor)")
-                    builder.appendln("\t\t\treturn $methodPrefix$trimmedInheritor(root)$typeEliminator")
+                    builder.appendln("\t\t\treturn $methodPrefix$trimmedInheritor(root${additionalParams.joinToString(separator = "") { ", ${it.split(":")[0]}" }})$typeEliminator")
                 }
             }
             builder.appendln("\t\tthrow $exceptionName(${if (passElementToException) "root, " else ""}\"Unknown $interfaceName: \$root\")")

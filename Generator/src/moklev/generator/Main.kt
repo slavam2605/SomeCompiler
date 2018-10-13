@@ -4,6 +4,7 @@ package moklev.generator
  * @author Moklev Vyacheslav
  */
 fun main(args: Array<String>) {
+    println("Generating visitor for AST nodes...")
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/ast",
             pathToSourcesImpl = "src/moklev/compiler/ast/impl",
@@ -13,6 +14,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "",
             methodPrefix = "build",
             methodParamName = "node",
+            additionalParams = listOf(),
             exceptionName = "CompilationException",
             passElementToException = true,
             interfaceMap = mapOf(
@@ -32,7 +34,8 @@ fun main(args: Array<String>) {
             ),
             generatedClassName = "SomeBuilder"
     ).run()
-    
+
+    println("Generating evaluator for semantic elements...")
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/semantic",
             pathToSourcesImpl = "src/moklev/compiler/semantic/impl",
@@ -42,6 +45,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "",
             methodPrefix = "evaluate",
             methodParamName = "element",
+            additionalParams = listOf(),
             exceptionName = "EvaluationException",
             passElementToException = true,
             interfaceMap = mapOf("SemanticExpression" to "Value"),
@@ -55,7 +59,8 @@ fun main(args: Array<String>) {
             ),
             generatedClassName = "SomeEvaluator"
     ).run()
-    
+
+    println("Generating annotated semantic elements with analyses...")
     ClassTransformerWorker(
             pathToSources = "src/moklev/compiler/semantic/impl",
             targetPackage = "moklev.compiler.compilation.analysis.impl",
@@ -63,13 +68,13 @@ fun main(args: Array<String>) {
             transformerClassName = "AnalysisAnnotator",
             targetDir = "gen",
             classNameTransformer = { "${it}Analysis" },
-            interfaceMap = mapOf("SemanticExpression" to "ExpressionAnalysis", "SemanticStatement" to "StatementAnalysis"),
+            interfaceMap = mapOf("SemanticExpression" to "ExpressionAnalysis<T>", "SemanticStatement" to "StatementAnalysis<T>"),
             interfaceInheritance = mapOf("SemanticStatement" to listOf("SemanticExpression")),
             rootInterfaces = listOf("SemanticStatement"),
             rootTypeName = "SemanticElement",
             rootResultType = "StatementAnalysis",
             newParamName = "lastAnalysis",
-            newParamType = "MonotonicAnalysis",
+            newParamType = "MonotonicAnalysis<T>",
             headerLines = listOf(
                     "import moklev.compiler.compilation.analysis.*",
                     "import moklev.compiler.compilation.MonotonicAnalysis",
@@ -83,21 +88,23 @@ fun main(args: Array<String>) {
                     "import moklev.compiler.semantic.impl.*"
             )
     ).run()
-    
+
+    println("Generating visitor for annotated semantic elements...")
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/compilation/analysis",
             pathToSourcesImpl = "gen/moklev/compiler/compilation/analysis/impl",
-            trimInterface = { it!!.removeSuffix("Analysis") },
+            trimInterface = { it!!.removeSuffix("<T>").removeSuffix("Analysis") },
             trimImpl = { it!!.removeSuffix("Analysis") },
             withTypeParameter = true,
-            typeParameterBound = "MonotonicAnalysis",
+            typeParameterBound = "MonotonicAnalysis<T>",
             methodPrefix = "analyse",
             methodParamName = "element",
+            additionalParams = listOf("input: T"),
             exceptionName = "RuntimeException",
             passElementToException = false,
             interfaceMap = mapOf(
-                    "ExpressionAnalysis" to "ExpressionAnalysis",
-                    "StatementAnalysis" to "StatementAnalysis"
+                    "ExpressionAnalysis<T>" to "Triple<T, ExpressionAnalysis, Boolean>",
+                    "StatementAnalysis<T>" to "Triple<T, StatementAnalysis, Boolean>"
             ),
             onlyImplInterfaces = setOf(),
             targetPackage = "moklev.compiler.compilation.analysis",
