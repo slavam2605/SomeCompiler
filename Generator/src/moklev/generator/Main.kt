@@ -22,6 +22,8 @@ fun main(args: Array<String>) {
                     "ExpressionASTNode" to "SemanticExpression",
                     "TypeASTNode" to "Type"
             ),
+            ignoreInterfaces = setOf(),
+            isAvailableAnnotation = { true },
             onlyImplInterfaces = setOf("ASTNode"),
             targetPackage = "moklev.compiler.compilation",
             targetDir = "gen",
@@ -49,6 +51,8 @@ fun main(args: Array<String>) {
             exceptionName = "EvaluationException",
             passElementToException = true,
             interfaceMap = mapOf("SemanticExpression" to "Value"),
+            ignoreInterfaces = setOf(),
+            isAvailableAnnotation = { true },
             onlyImplInterfaces = setOf(),
             targetPackage = "moklev.compiler.evaluation",
             targetDir = "gen",
@@ -89,7 +93,7 @@ fun main(args: Array<String>) {
             )
     ).run()
 
-    println("Generating visitor for annotated semantic elements...")
+    println("Generating visitor for non-basic annotated semantic elements...")
     GeneratorWorker(
             pathToSources = "src/moklev/compiler/compilation/analysis",
             pathToSourcesImpl = "gen/moklev/compiler/compilation/analysis/impl",
@@ -103,10 +107,11 @@ fun main(args: Array<String>) {
             exceptionName = "RuntimeException",
             passElementToException = false,
             interfaceMap = mapOf(
-                    "ExpressionAnalysis<T>" to "Triple<T, ExpressionAnalysis, Boolean>",
-                    "StatementAnalysis<T>" to "Triple<T, StatementAnalysis, Boolean>"
+                    "StatementAnalysis<T>" to "Pair<T, Boolean>"
             ),
-            onlyImplInterfaces = setOf(),
+            ignoreInterfaces = setOf("ExpressionAnalysis<T>"),
+            isAvailableAnnotation = { "BasicStatement" !in it },
+            onlyImplInterfaces = setOf("StatementAnalysis<T>"),
             targetPackage = "moklev.compiler.compilation.analysis",
             targetDir = "gen",
             headerLines = listOf(
@@ -114,5 +119,33 @@ fun main(args: Array<String>) {
                     "import moklev.compiler.compilation.analysis.impl.*"
             ),
             generatedClassName = "SomeAnalyzer"
+    ).run()
+
+    println("Generating visitor for basic annotated semantic elements...")
+    GeneratorWorker(
+            pathToSources = "src/moklev/compiler/compilation/analysis",
+            pathToSourcesImpl = "gen/moklev/compiler/compilation/analysis/impl",
+            trimInterface = { it!!.removeSuffix("<T>").removeSuffix("Analysis") },
+            trimImpl = { it!!.removeSuffix("Analysis") },
+            withTypeParameter = true,
+            typeParameterBound = "MonotonicAnalysis<T>",
+            methodPrefix = "analyse",
+            methodParamName = "element",
+            additionalParams = listOf(),
+            exceptionName = "RuntimeException",
+            passElementToException = false,
+            interfaceMap = mapOf(
+                    "StatementAnalysis<T>" to "T"
+            ),
+            ignoreInterfaces = setOf(),
+            isAvailableAnnotation = { "BasicStatement" in it },
+            onlyImplInterfaces = setOf("StatementAnalysis<T>"),
+            targetPackage = "moklev.compiler.compilation.analysis",
+            targetDir = "gen",
+            headerLines = listOf(
+                    "import moklev.compiler.compilation.MonotonicAnalysis",
+                    "import moklev.compiler.compilation.analysis.impl.*"
+            ),
+            generatedClassName = "SomeBasicAnalyzer"
     ).run()
 }

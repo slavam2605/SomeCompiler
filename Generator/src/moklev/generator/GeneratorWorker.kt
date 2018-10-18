@@ -24,6 +24,8 @@ class GeneratorWorker(
         val exceptionName: String,
         val passElementToException: Boolean,
         val interfaceMap: Map<String, String>,
+        val ignoreInterfaces: Set<String>,
+        val isAvailableAnnotation: (List<String>) -> Boolean,
         val onlyImplInterfaces: Set<String>,
         val targetPackage: String,
         val targetDir: String,
@@ -58,6 +60,10 @@ class GeneratorWorker(
             val (tree, _) = parseFile(implFile)
             GeneratorVisitor().apply { 
                 visit(tree)
+                if (!isAvailableAnnotation(annotations))
+                    return@apply
+                if (baseClassName in ignoreInterfaces)
+                    return@apply
                 val trimmedClassName = trimImpl(className)
                 val returnTypeString = interfaceMap[baseClassName!!]?.let { ": $it" } ?: ""
                 val typeParamString = if (withTypeParameter) "<T>" else ""

@@ -14,6 +14,7 @@ class ClassTransformerVisitor(val stream: CharStream) : KotlinParserBaseVisitor<
     var body: String = ""
     val importList = mutableListOf<String>()
     val mainConstructorProperties = mutableListOf<Triple<String, String, String>>()
+    val annotations: MutableList<String> = mutableListOf()
 
     override fun visitImportHeader(ctx: KotlinParser.ImportHeaderContext) {
         importList.add(
@@ -29,6 +30,9 @@ class ClassTransformerVisitor(val stream: CharStream) : KotlinParserBaseVisitor<
         if (this::className.isInitialized)
             throw RuntimeException("More than one class declaration found ($className, ${ctx.simpleIdentifier().text})")
         className = ctx.simpleIdentifier().text
+        annotations.addAll(
+                ctx.modifierList()?.annotations()?.mapNotNull { it.annotation()?.text?.trim()?.removePrefix("@") } ?: listOf()
+        )
         for (specifier in ctx.delegationSpecifiers()?.delegationSpecifier() ?: emptyList()) {
             if (specifier.userType() == null)
                 continue

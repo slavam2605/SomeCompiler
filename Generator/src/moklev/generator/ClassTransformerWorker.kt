@@ -46,10 +46,22 @@ class ClassTransformerWorker(
                 }
                 builder.appendln()
                 val newClassName = classNameTransformer(className)
+                for (annotation in annotations) {
+                    builder.appendln("@$annotation")
+                }
                 builder.append(
-                        "class $newClassName<T: $newParamType>(${(listOf(Triple("", newParamName, "T")) + mainConstructorProperties).joinToString { (modifiers, name, type) -> "$modifiers${if (modifiers.isEmpty()) "" else " "}val $name: $type" }}) : ${interfaceMap[baseClassName]} "
+                        "class $newClassName<T: $newParamType>(${(listOf(Triple("override", newParamName, "T")) + mainConstructorProperties).joinToString { (modifiers, name, type) ->
+                            val newType = interfaceMap[type] ?: run {
+                                val match = "List<(.*)>".toRegex().matchEntire(type)
+                                if (match != null)
+                                        "List<${interfaceMap[match.groupValues[1]]}>"
+                                else
+                                    type
+                            }
+                            "$modifiers${if (modifiers.isEmpty()) "" else " "}${if (name == newParamName) "var" else "val"} $name: $newType" 
+                        }}) : ${interfaceMap[baseClassName]} "
                 )
-                builder.append(body)
+                builder.append(body.replace("FunctionReference", "FunctionReferenceAnalysis<T>"))
                 val targetDirWithPackage = File(targetDir + "/" + targetPackage.replace(".", "/"))
                 targetDirWithPackage.mkdirs()
                 val printWriter = PrintWriter("${targetDirWithPackage.absolutePath}/$newClassName.kt")
@@ -67,13 +79,27 @@ class ClassTransformerWorker(
         }
         writer.println()
         writer.println("class $transformerClassName<T: $newParamType> {")
-        for (interfaceName in interfaceMap.keys + listOf("")) {
+        for (interfaceName in interfaceMap.keys) {
             writer.println("\tfun annotate$interfaceName(element: ${if (interfaceName.isEmpty()) rootTypeName else interfaceName}, init: T): ${interfaceMap[interfaceName] ?: rootResultType} {")
             for (visitor in visitors.values) {
                 if (visitor.baseClassName != interfaceName)
                     continue
                 writer.println("\t\tif (element is ${visitor.className})")
-                val params = visitor.mainConstructorProperties.joinToString(separator = "") { (_, name, _) -> ", element.$name" }
+                val params = visitor.mainConstructorProperties.joinToString(separator = "") { (_, name, type) ->
+                    val mappedInterface = interfaceMap[type]
+                    if (mappedInterface != null) {
+                        ", annotate$type(element.$name, init)"
+                    } else {
+                        val match = "List<(.*)>".toRegex().matchEntire(type)
+                        if (match != null) {
+                            val innerType = match.groupValues[1]
+                            val innerMapped = interfaceMap[innerType]
+                            if (innerMapped != null) {
+                                ", element.$name.map { annotate$innerType(it, init) }"
+                            } else ", element.$name"
+                        } else ", element.$name"
+                    } 
+                }
                 writer.println("\t\t\treturn ${classNameTransformer(visitor.className)}(init$params)")
             }
             for (inheritor in interfaceInheritance[interfaceName] ?: (if (interfaceName.isEmpty()) rootInterfaces else listOf())) {
