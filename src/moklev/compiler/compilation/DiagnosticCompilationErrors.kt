@@ -21,4 +21,5 @@ object DiagnosticCompilationErrors {
     val VariableAlreadyDeclaredError = { name: String -> "Variable $name is already defined" }
     val UnresolvedSymbolError = { name: String -> "Unresolved symbol: $name" }
     val UnresolvedTypeError = { name: String -> "Unresolved type: $name" }
+    val MissingReturnError = { name: String -> "Missing return statement in function $name" }
 }

@@ -27,6 +27,7 @@ import moklev.compiler.types.Type
 class SemanticBuilder : SomeBuilder {
     val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
+    val semanticAnalyzer = SemanticAnalyzer()
     var currentFunction: FunctionDeclaration? = null
 
     private inline fun <T> withFunction(function: FunctionDeclaration, body: () -> T): T {
@@ -114,6 +115,7 @@ class SemanticBuilder : SomeBuilder {
             }
         }
         stub.complete(body)
+        semanticAnalyzer.analyzeFunctionDeclaration(stub)
     }
 
     override fun buildDeclarationList(node: DeclarationListNode) {

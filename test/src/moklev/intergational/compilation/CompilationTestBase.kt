@@ -12,13 +12,23 @@ import kotlin.test.fail
 abstract class CompilationTestBase {
     protected fun runTestError(program: String, expectedError: String) {
         try {
-            val programAst = ParserUtil.parse(program)
-            val builder = SemanticBuilder()
-            builder.build(programAst)
+            buildProgram(program)
         } catch (e: CompilationException) {
             assertEquals(expectedError, e.message)
+            println(e.message)
             return
         }
         fail("Expected exception")
+    }
+    
+    protected fun runTestSucceeded(program: String) {
+        buildProgram(program)
+        println("done")
+    }
+
+    private fun buildProgram(program: String) {
+        val programAst = ParserUtil.parse(program)
+        val builder = SemanticBuilder()
+        builder.build(programAst)
     }
 }
