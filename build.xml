@@ -1,0 +1,18 @@
+<project name="SomeCompiler">
+    <target name="Generate some parser">
+        <java jar="lib/antlr-4.7.1-complete.jar" fork="true">
+            <arg line="-o gen/moklev/compiler/parsing -Xexact-output-dir -package moklev.compiler.parsing src/moklev/compiler/parsing/SomeLexer.g4"/>
+        </java>
+        <java jar="lib/antlr-4.7.1-complete.jar" fork="true">
+            <arg line="-o gen/moklev/compiler/parsing -Xexact-output-dir -visitor -no-listener -lib gen/moklev/compiler/parsing -package moklev.compiler.parsing src/moklev/compiler/parsing/SomeParser.g4"/>
+        </java>
+    </target>
+    <target name="Generate kotlin parser">
+        <java jar="lib/antlr-4.7.1-complete.jar" fork="true">
+            <arg line="-o Generator/gen/moklev/generator/parsing -Xexact-output-dir -package moklev.generator.parsing Generator/src/moklev/generator/parsing/KotlinLexer.g4"/>
+        </java>
+        <java jar="lib/antlr-4.7.1-complete.jar" fork="true">
+            <arg line="-o Generator/gen/moklev/generator/parsing -Xexact-output-dir -visitor -no-listener -lib Generator/gen/moklev/generator/parsing -package moklev.generator.parsing Generator/src/moklev/generator/parsing/KotlinParser.g4"/>
+        </java>
+    </target>
+</project>

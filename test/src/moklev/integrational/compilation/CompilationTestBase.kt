@@ -1,4 +1,4 @@
-package moklev.intergational.compilation
+package moklev.integrational.compilation
 
 import moklev.compiler.compilation.SemanticBuilder
 import moklev.compiler.exceptions.CompilationException

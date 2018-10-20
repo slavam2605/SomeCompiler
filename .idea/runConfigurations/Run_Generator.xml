@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Generator" type="JetRunConfigurationType" factoryName="Kotlin">
+    <module name="Generator" />
+    <option name="VM_PARAMETERS" value="" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <option name="MAIN_CLASS_NAME" value="moklev.generator.MainKt" />
+    <option name="WORKING_DIRECTORY" value="" />
+    <method v="2">
+      <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/build.xml" target="Generate some parser" />
+      <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/build.xml" target="Generate kotlin parser" />
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

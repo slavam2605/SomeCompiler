@@ -1,0 +1,9 @@
+# Output build folder
+out/
+
+# Generated sources folder
+gen/
+
+# User-specific data
+.idea/**/misc.xml
+.idea/**/workspace.xml

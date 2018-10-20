@@ -1,4 +1,4 @@
-package moklev.intergational.compilation
+package moklev.integrational.compilation
 
 import moklev.compiler.compilation.DiagnosticCompilationErrors.AssignTypeMismatchError
 import moklev.compiler.compilation.DiagnosticCompilationErrors.InvocationArgumentTypeMismatchError

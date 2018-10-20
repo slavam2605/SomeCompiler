@@ -1,4 +1,4 @@
-package moklev.intergational.compilation
+package moklev.integrational.compilation
 
 import moklev.compiler.compilation.DiagnosticCompilationErrors.MissingReturnError
 import org.junit.Test
