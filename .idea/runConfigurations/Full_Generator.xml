@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Generator" type="JetRunConfigurationType" factoryName="Kotlin">
+  <configuration default="false" name="Full Generator" type="JetRunConfigurationType" factoryName="Kotlin">
     <module name="Generator" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="" />
