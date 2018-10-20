@@ -1,6 +1,7 @@
 package moklev.compiler.compilation
 
 import moklev.compiler.compilation.analysis.AnalysisAnnotator
+import moklev.compiler.compilation.analysis.ExpressionAnalysis
 import moklev.compiler.compilation.analysis.SomeAnalyzer
 import moklev.compiler.compilation.analysis.StatementAnalysis
 import moklev.compiler.compilation.analysis.impl.IfAnalysis
@@ -53,6 +54,9 @@ class BackwardMonotonicFramework<T: MonotonicAnalysis<T>> : SomeAnalyzer<T> {
     }
 
     override fun analyseStatement(root: StatementAnalysis<T>, input: T): Pair<T, Boolean> {
+        if (root is ExpressionAnalysis<T>) {
+            return input to false
+        }
         if (root::class.findAnnotation<BasicStatement>() != null) {
             val newValue = input.analyseStatement(root)
             return newValue to change(root, newValue)

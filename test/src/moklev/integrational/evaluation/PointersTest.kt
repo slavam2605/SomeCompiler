@@ -51,6 +51,7 @@ class PointersTest : EvaluationTestBase() {
                             }
                             return x;
                         }
+                        return 0;
                     }
                 """,
                 "foo()",
