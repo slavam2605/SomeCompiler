@@ -9,12 +9,20 @@ Levels of AST node:
 
 ## Symbol resolution
 Kinds of symbols in order of resolution:
+
+No target:
 1. **Local variable**
 Structured in nested scopes.
 2. **Function**
 Resolves to a function reference.
-3. **Predefined function**
+3. **Constructor**
+Resolves to a constructor reference
+4. **Predefined function**
 Same as function
+
+With target:
+1. **Class field**
+2. **Class function**
 
 ## Type system
 * Basic types:
@@ -23,3 +31,4 @@ Same as function
    * `Boolean`
 * Pointer types: `T*`
    * Array pointer types: `T[]` _(additionally allows shifts)_
+* Class types `SomeClass`

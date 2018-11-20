@@ -1,9 +1,6 @@
 package moklev.compiler.evaluation
 
-import moklev.compiler.types.ArrayPointerType
-import moklev.compiler.types.PointerType
-import moklev.compiler.types.ScalarType
-import moklev.compiler.types.Type
+import moklev.compiler.types.*
 
 /**
  * @author Moklev Vyacheslav
@@ -20,6 +17,9 @@ sealed class Value {
     abstract class ArrayPointer : Pointer() {
         abstract fun shift(count: Long): ArrayPointer
     }
+    class Class(override val type: ClassType): Value() {
+        val fields = mutableMapOf<String, Value>()
+    }
     
     val int64Value: kotlin.Long
         get() = (this as Int64).value
@@ -30,13 +30,14 @@ sealed class Value {
     val booleanValue: kotlin.Boolean
         get() = (this as Boolean).value
 
-    val type
+    open val type
         get() = when (this) {
             is Int64 -> ScalarType.INT64
             is Double -> ScalarType.DOUBLE
             is Boolean -> ScalarType.BOOLEAN
             is ArrayPointer -> ArrayPointerType(sourceType)
             is Pointer -> PointerType(sourceType)
+            is Class -> error("Overridden in subclass")
         }
     
     override fun toString(): String {
@@ -46,6 +47,7 @@ sealed class Value {
             is Boolean -> "Boolean[$value]"
             is ArrayPointer -> "ArrayPointer[?]"
             is Pointer -> "Pointer[?]"
+            is Class -> "Class<${type.declaration.name}>{${type.declaration.fields.map { fields[it.name] }.joinToString()}}"
         }
     }
 }

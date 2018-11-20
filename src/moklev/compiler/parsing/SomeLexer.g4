@@ -12,6 +12,7 @@ LESS:       '<';
 LPAREN:     '(';
 RPAREN:     ')';
 COMMA:      ',';
+DOT:        '.';
 COLON:      ':';
 LBRACE:     '{';
 RBRACE:     '}';
@@ -26,6 +27,7 @@ FUN:        'fun';
 ELSE:       'else';
 RETURN:     'return';
 VAR:        'var';
+CLASS:      'class';
 
 IDENT:      [a-zA-Z_]+ [a-zA-Z0-9_]*;
 NUMBER:     [0-9]+ '.' [0-9]+ | [0-9]+;

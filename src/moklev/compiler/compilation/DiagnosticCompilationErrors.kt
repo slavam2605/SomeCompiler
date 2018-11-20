@@ -9,7 +9,7 @@ import moklev.compiler.types.Type
 object DiagnosticCompilationErrors {
     val AddressOfError = { target: SemanticExpression -> "Can't get address of $target" }
     val DereferenceTypeError = { type: Type -> "Can dereference only pointer type, found: $type" }
-    val InvocationTargetError = { target: SemanticExpression -> "Invocation target is not a function reference: $target" }
+    val InvocationTargetError = { target: SemanticExpression -> "Invocation target is not a function or constructor reference: $target" }
     val InvocationWrongNumberOfArgumentsError = { expected: Int, found: Int -> "Wrong number of arguments: expected $expected, found: $found" }
     val InvocationArgumentTypeMismatchError = { index: Int, expected: Type, found: Type -> "Invalid type of argument ${index + 1}, expected: $expected, found: $found" }
     val ReturnTypeMismatchError = { expected: Type, found: Type -> "Function return type mismatch: function should return $expected, actual type: $found" }
@@ -18,6 +18,7 @@ object DiagnosticCompilationErrors {
     val AssignTypeMismatchError = { expected: Type, found: Type -> "Type mismatch in assignment: value should have type $expected, found: $found" }
     val NoSuchBinaryOperationError = { op: String, left: Type, right: Type -> "No such overload for binary operator $op and types $left and $right" }
     val FunctionAlreadyDeclaredError = { name: String -> "Function $name is already defined" }
+    val ClassAlreadyDeclaredError = { name: String -> "Class $name is already declared" }
     val VariableAlreadyDeclaredError = { name: String -> "Variable $name is already defined" }
     val UnresolvedSymbolError = { name: String -> "Unresolved symbol: $name" }
     val UnresolvedTypeError = { name: String -> "Unresolved type: $name" }

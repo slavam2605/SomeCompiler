@@ -33,8 +33,13 @@ class ClassTransformerWorker(
             val builder = StringBuilder()
             ClassTransformerVisitor(stream).apply {
                 visit(tree)
-                if (baseClassName !in interfaceMap)
+                try {
+                    if (baseClassName !in interfaceMap)
+                        return@apply
+                } catch (e: UninitializedPropertyAccessException) {
+                    System.err.println("No parsed base class for `$className`")
                     return@apply
+                }
                 visitors[className] = this
                 builder.appendln("package $targetPackage")
                 builder.appendln()
@@ -61,7 +66,11 @@ class ClassTransformerWorker(
                             "$modifiers${if (modifiers.isEmpty()) "" else " "}${if (name == newParamName) "var" else "val"} $name: $newType" 
                         }}) : ${interfaceMap[baseClassName]} "
                 )
-                builder.append(body.replace("FunctionReference", "FunctionReferenceAnalysis<T>"))
+                builder.append(
+                        body
+                                .replace("FunctionReference", "FunctionReferenceAnalysis<T>")
+                                .replace("ConstructorReference", "ConstructorReferenceAnalysis<T>")
+                )
                 val targetDirWithPackage = File(targetDir + "/" + targetPackage.replace(".", "/"))
                 targetDirWithPackage.mkdirs()
                 val printWriter = PrintWriter("${targetDirWithPackage.absolutePath}/$newClassName.kt")

@@ -5,6 +5,7 @@ import moklev.compiler.exceptions.ReturnException
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
+import moklev.compiler.types.ClassType
 import moklev.compiler.types.Type
 
 /**
@@ -41,6 +42,14 @@ class Evaluator : SomeEvaluator {
         return target.read()
     }
 
+    override fun evaluateFieldReference(element: FieldReference): Value {
+        val target = evaluateExpression(element.target) as? Value.Class
+                ?: throw EvaluationException(element, "Target should be a class value")
+        if (target.type.declaration.fields.find { it.name == element.name } == null)
+            throw EvaluationException(element, "No field `${element.name}` in class `${target.type.declaration.name}`")
+        return target.fields[element.name] ?: throw EvaluationException(element, "Uninitialized field")
+    }
+
     private fun invokeFunction(target: FunctionReference, parameters: List<Value>) {
         if (target.declaration.body === SemanticStatement.Stub) {
             val result = Predefined.invokeFunction(target.declaration.name, parameters)
@@ -57,13 +66,25 @@ class Evaluator : SomeEvaluator {
     }
     
     override fun evaluateInvocation(element: Invocation): Value {
-        try {
-            val target = element.target as FunctionReference
-            val parameters = element.parameters.map { evaluateExpression(it) }
-            invokeFunction(target, parameters)
-            throw EvaluationException(element, "Function ${target.declaration.name} returned no value")
-        } catch (e: ReturnException) {
-            return e.value
+        when (val target = element.target) {
+            is ConstructorReference -> {
+                return Value.Class(ClassType(target.declaration)).apply {
+                    val parameters = element.parameters.map { evaluateExpression(it) }
+                    for (index in 0 until target.declaration.fields.size) {
+                        fields[target.declaration.fields[index].name] = parameters[index]
+                    }
+                }
+            }
+            is FunctionReference -> {
+                try {
+                    val parameters = element.parameters.map { evaluateExpression(it) }
+                    invokeFunction(target, parameters)
+                    throw EvaluationException(element, "Function ${target.declaration.name} returned no value")
+                } catch (e: ReturnException) {
+                    return e.value
+                }
+            }
+            else -> throw EvaluationException(element, "Unknown target: `${target.javaClass}`")
         }
     }
 
@@ -110,8 +131,15 @@ class Evaluator : SomeEvaluator {
         when (target) {
             is LocalVariableReference -> assignLocalVariable(target, value)
             is Dereference -> assignDereference(target, value)
+            is FieldReference -> assignFieldReference(target, value)
             else -> throw EvaluationException("Left side of expression is not an assignable expression: $target")
         }
+    }
+
+    private fun assignFieldReference(target: FieldReference, value: Value) {
+        val valueTarget = evaluateExpression(target.target) as? Value.Class
+                ?: throw EvaluationException(target, "Target is not a class value")
+        valueTarget.fields[target.name] = value
     }
     
     private fun assignDereference(target: Dereference, value: Value) {
@@ -166,8 +194,16 @@ class Evaluator : SomeEvaluator {
 
     override fun evaluateFunctionDeclaration(element: FunctionDeclaration) = Unit
 
+    override fun evaluateClassDeclaration(element: ClassDeclaration) = Unit
+
+    override fun evaluateFieldDeclaration(element: FieldDeclaration) = Unit
+
     override fun evaluateFunctionReference(element: FunctionReference): Value {
         throw EvaluationException(element, "Function reference can't be used as a value")
+    }
+
+    override fun evaluateConstructorReference(element: ConstructorReference): Value {
+        throw EvaluationException(element, "Constructor reference can't be used as a value")
     }
 
     private inline fun <T> withScope(body: () -> T): T {

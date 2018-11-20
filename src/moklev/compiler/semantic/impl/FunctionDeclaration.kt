@@ -1,7 +1,7 @@
 package moklev.compiler.semantic.impl
 
 import moklev.compiler.exceptions.CompilationException
-import moklev.compiler.semantic.SemanticElement
+import moklev.compiler.semantic.SemanticDeclaration
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.types.Type
 
@@ -12,7 +12,7 @@ open class FunctionDeclaration(
         val name: String,
         val parameters: List<Pair<String, Type>>,
         val returnType: Type
-) : SemanticElement {
+) : SemanticDeclaration {
     private var isStub: Boolean = true
 
     var body: SemanticStatement = SemanticStatement.Stub

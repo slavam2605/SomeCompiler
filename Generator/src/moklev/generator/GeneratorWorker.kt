@@ -1,10 +1,5 @@
 package moklev.generator
 
-import moklev.generator.parsing.KotlinLexer
-import moklev.generator.parsing.KotlinParser
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.tree.ParseTree
 import java.io.File
 import java.io.PrintWriter
 
@@ -20,7 +15,7 @@ class GeneratorWorker(
         val typeParameterBound: String,
         val methodPrefix: String,
         val methodParamName: String,
-        val additionalParams: List<String>,
+        val additionalParamsMap: (String) -> List<String>,
         val exceptionName: String,
         val passElementToException: Boolean,
         val interfaceMap: Map<String, String>,
@@ -64,9 +59,14 @@ class GeneratorWorker(
                     return@apply
                 if (baseClassName in ignoreInterfaces)
                     return@apply
+                if (baseClassName == null) {
+                    System.err.println("No parsed base class for `$className`")
+                    return@apply
+                }
                 val trimmedClassName = trimImpl(className)
                 val returnTypeString = interfaceMap[baseClassName!!]?.let { ": $it" } ?: ""
                 val typeParamString = if (withTypeParameter) "<T>" else ""
+                val additionalParams = additionalParamsMap(baseClassName!!)
                 builder.appendln("\tfun $methodPrefix$trimmedClassName($methodParamName: $className$typeParamString${additionalParams.joinToString(separator = "") { ", $it" }})$returnTypeString")
                 builder.appendln()
                 interfaceImplementations.compute(baseClassName!!) { _, list ->
@@ -77,6 +77,7 @@ class GeneratorWorker(
         for ((interfaceName, implementations) in interfaceImplementations) {
             val trimmedInterfaceName = trimInterface(interfaceName)
             val returnTypeString = interfaceMap[interfaceName]?.let { ": $it" } ?: ""
+            val additionalParams = additionalParamsMap(interfaceName)
             builder.appendln("\tfun $methodPrefix$trimmedInterfaceName(root: $interfaceName${additionalParams.joinToString(separator = "") { ", $it" }})$returnTypeString {")
             for (implementation in implementations) {
                 val trimmedImplName = trimImpl(implementation)

@@ -1,24 +1,26 @@
 package moklev.compiler.compilation
 
+import moklev.compiler.compilation.DiagnosticCompilationErrors.ClassAlreadyDeclaredError
 import moklev.compiler.compilation.DiagnosticCompilationErrors.FunctionAlreadyDeclaredError
 import moklev.compiler.compilation.DiagnosticCompilationErrors.UnresolvedSymbolError
 import moklev.compiler.compilation.DiagnosticCompilationErrors.VariableAlreadyDeclaredError
 import moklev.compiler.exceptions.CompilationException
+import moklev.compiler.semantic.SemanticDeclaration
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
-import moklev.compiler.semantic.impl.FunctionDeclaration
-import moklev.compiler.semantic.impl.FunctionReference
-import moklev.compiler.semantic.impl.LocalVariableReference
+import moklev.compiler.semantic.impl.*
 import moklev.compiler.types.ArrayPointerType
+import moklev.compiler.types.ClassType
 import moklev.compiler.types.ScalarType
 import moklev.compiler.types.Type
 
 /**
  * @author Moklev Vyacheslav
  */
-class SymbolResolver {
+class SymbolResolver : DeclarationHolder {
     val declaredVariables = mutableListOf(mutableMapOf<String, Type>())
     val declaredFunctions = mutableMapOf<String, FunctionDeclaration>()
+    val declaredClasses = mutableMapOf<String, ClassDeclaration>()
     val predefinedFunctions = mutableMapOf<String, FunctionDeclaration>()
     
     init {
@@ -40,7 +42,27 @@ class SymbolResolver {
         }
     }
     
-    fun resolveSymbol(name: String): SemanticExpression {
+    fun resolveSymbol(target: SemanticExpression?, name: String): SemanticExpression {
+        if (target == null)
+            return resolveGlobalSymbol(name)
+        return resolveQualifiedSymbol(target, name)
+    }
+
+    private fun resolveQualifiedSymbol(target: SemanticExpression, name: String): SemanticExpression {
+        val targetType = target.type
+        if (targetType is ClassType) {
+            val declaration = targetType.declaration
+            declaration.fields.find { it.name == name }?.let {
+                return FieldReference(name, target)
+            }
+            declaration.methods.find { it.name == name }?.let {
+                return MethodReference(name, target)
+            }
+        }
+        throw CompilationException(UnresolvedSymbolError(name))
+    }
+    
+    private fun resolveGlobalSymbol(name: String): SemanticExpression {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
             val declaredType = scope[name] ?: return@forEachIndexed
             val scopeLevel = declaredVariables.size - scopeIndex - 1
@@ -48,6 +70,9 @@ class SymbolResolver {
         }
         declaredFunctions[name]?.let { declaredFunction ->
             return FunctionReference(declaredFunction)
+        }
+        declaredClasses[name]?.let { declaredClass -> // constructor reference
+            return ConstructorReference(declaredClass)
         }
         predefinedFunctions[name]?.let { predefinedFunction ->
             return FunctionReference(predefinedFunction)
@@ -69,6 +94,20 @@ class SymbolResolver {
         } finally {
             declaredVariables.removeAt(declaredVariables.lastIndex)
         }
+    }
+
+    override fun declare(declaration: SemanticDeclaration) {
+        if (declaration is FunctionDeclaration)
+            return declareFunction(declaration)
+        if (declaration is ClassDeclaration)
+            return declareClass(declaration)
+        TODO("Make a generator for declarations visitor")
+    }
+    
+    fun declareClass(declaration: ClassDeclaration) {
+        if (declaration.name in declaredClasses)
+            throw CompilationException(ClassAlreadyDeclaredError(declaration.name))
+        declaredClasses[declaration.name] = declaration
     }
     
     fun declareFunction(declaration: FunctionDeclaration) {

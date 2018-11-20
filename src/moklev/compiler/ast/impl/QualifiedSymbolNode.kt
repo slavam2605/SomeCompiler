@@ -5,4 +5,4 @@ import moklev.compiler.ast.ExpressionASTNode
 /**
  * @author Moklev Vyacheslav
  */
-class SymbolNode(val name: String) : ExpressionASTNode
+class QualifiedSymbolNode(val target: ExpressionASTNode?, val name: String) : ExpressionASTNode

@@ -5,7 +5,7 @@ package moklev.compiler.types
  */
 open class PointerType(val sourceType: Type) : Type {
     override fun equals(other: Any?): Boolean {
-        if (javaClass != other?.javaClass)
+        if (other?.javaClass != PointerType::class.java)
             return false
         return (other as PointerType).sourceType == sourceType
     }

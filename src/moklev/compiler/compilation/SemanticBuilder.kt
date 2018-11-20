@@ -13,6 +13,7 @@ import moklev.compiler.compilation.DiagnosticCompilationErrors.NoSuchBinaryOpera
 import moklev.compiler.compilation.DiagnosticCompilationErrors.ReturnTypeMismatchError
 import moklev.compiler.compilation.DiagnosticCompilationErrors.WhileConditionBooleanTypeError
 import moklev.compiler.exceptions.CompilationException
+import moklev.compiler.semantic.SemanticDeclaration
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
@@ -25,8 +26,8 @@ import moklev.compiler.types.Type
  * @author Moklev Vyacheslav
  */
 class SemanticBuilder : SomeBuilder {
-    val typeResolver = TypeResolver()
     val symbolResolver = SymbolResolver()
+    val typeResolver = TypeResolver(symbolResolver)
     val semanticAnalyzer = SemanticAnalyzer()
     var currentFunction: FunctionDeclaration? = null
 
@@ -38,7 +39,24 @@ class SemanticBuilder : SomeBuilder {
             currentFunction = null
         }
     }
+
+    override fun buildQualifiedSymbol(node: QualifiedSymbolNode): SemanticExpression {
+        val target = node.target?.let { buildExpression(it) }
+        return symbolResolver.resolveSymbol(target, node.name)
+    }
     
+    override fun buildFieldDeclaration(node: FieldDeclarationNode, context: CompilationContext) = Unit
+
+    override fun buildClassDeclaration(node: ClassDeclarationNode, context: CompilationContext) {
+        val declarations = node.innerDeclarations
+        val classStub = symbolResolver.declaredClasses[node.name]
+                ?: throw CompilationException(node, "No precompiled stub found")
+        val newContext = ClassDeclarationContext(classStub)
+        for (declaration in declarations) {
+            buildDeclaration(declaration, newContext)
+        }
+    }
+
     override fun buildAddressOf(node: AddressOfNode): SemanticExpression {
         val target = buildExpression(node.target)
         if (target is LocalVariableReference)
@@ -67,22 +85,29 @@ class SemanticBuilder : SomeBuilder {
         return typeResolver.resolveType(node.name)
     }
 
-    fun buildDeclarationStub(root: DeclarationASTNode) {
+    fun buildDeclarationStub(root: DeclarationASTNode): SemanticDeclaration {
         if (root is FunctionDeclarationNode)
             return buildFunctionDeclarationStub(root)
-        throw CompilationException(root, "Not a declaration ASTNode: $root")
+        if (root is ClassDeclarationNode)
+            return buildClassDeclarationStub(root)
+        if (root is FieldDeclarationNode)
+            return buildFieldDeclarationStub(root)
+        TODO("Generate additional methods for creating stubs")
     }
-    
+
     override fun buildInvocation(node: InvocationNode): SemanticExpression {
         val target = buildExpression(node.target)
-        if (target !is FunctionReference)
-            throw CompilationException(node, InvocationTargetError(target))
+        val targetParameters = when (target) {
+            is FunctionReference -> target.declaration.parameters
+            is ConstructorReference -> target.declaration.fields.map { it.name to it.type }
+            else -> throw CompilationException(node, InvocationTargetError(target))
+        }
         val parameters = node.parameters.map { buildExpression(it) }
-        if (parameters.size != target.declaration.parameters.size)
-            throw CompilationException(node, InvocationWrongNumberOfArgumentsError(target.declaration.parameters.size, parameters.size))
+        if (parameters.size != targetParameters.size)
+            throw CompilationException(node, InvocationWrongNumberOfArgumentsError(targetParameters.size, parameters.size))
         for (index in 0 until parameters.size) {
-            if (parameters[index].type != target.declaration.parameters[index].second)
-                throw CompilationException(node, InvocationArgumentTypeMismatchError(index, target.declaration.parameters[index].second, parameters[index].type))
+            if (parameters[index].type != targetParameters[index].second)
+                throw CompilationException(node, InvocationArgumentTypeMismatchError(index, targetParameters[index].second, parameters[index].type))
         }
         return Invocation(target, parameters)
     }
@@ -95,17 +120,32 @@ class SemanticBuilder : SomeBuilder {
             throw CompilationException(node, ReturnTypeMismatchError(function.returnType, value.type))
         return Return(value)
     }
+
+    fun buildFieldDeclarationStub(node: FieldDeclarationNode): FieldDeclaration {
+        val type = buildType(node.type)
+        return FieldDeclaration(node.name, type)
+    }
     
-    fun buildFunctionDeclarationStub(node: FunctionDeclarationNode) {
+    fun buildClassDeclarationStub(node: ClassDeclarationNode): ClassDeclaration {
+        val innerStubs = node.innerDeclarations.map { buildDeclarationStub(it) }
+        val fields = innerStubs.filterIsInstance<FieldDeclaration>()
+        val methods = innerStubs.filterIsInstance<FunctionDeclaration>()
+        if (fields.size + methods.size != innerStubs.size)
+            throw CompilationException(node, "Unknown declarations in class ${node.name}")
+        return ClassDeclaration(node.name, fields, methods)
+    }
+    
+    fun buildFunctionDeclarationStub(node: FunctionDeclarationNode): FunctionDeclaration {
         val parameters = node.parameters.map { (name, type) -> name to buildType(type) }
         val returnType = buildType(node.returnType)
-        val declarationStub = FunctionDeclaration(node.name, parameters, returnType)
-        symbolResolver.declareFunction(declarationStub)
+        return FunctionDeclaration(node.name, parameters, returnType)
     }
 
-    override fun buildFunctionDeclaration(node: FunctionDeclarationNode) {
-        val stub = symbolResolver.declaredFunctions[node.name] 
-                ?: throw CompilationException(node, "No predeclared stub found") 
+    override fun buildFunctionDeclaration(node: FunctionDeclarationNode, context: CompilationContext) {
+        val stub = when (context) {
+            is TopLevelContext -> symbolResolver.declaredFunctions[node.name]
+            is ClassDeclarationContext -> context.outerClass.methods.find { it.name == node.name }
+        } ?: throw CompilationException(node, "No predeclared stub found")
         val body = withFunction(stub) {
             symbolResolver.withScope {
                 stub.parameters.forEach { (name, type) ->
@@ -119,10 +159,23 @@ class SemanticBuilder : SomeBuilder {
     }
 
     override fun buildDeclarationList(node: DeclarationListNode) {
-        for (declaration in node.declarations)
-            buildDeclarationStub(declaration)
-        for (declaration in node.declarations)
-            buildDeclaration(declaration)
+        val typeDeclarations = mutableListOf<DeclarationASTNode>()
+        val otherDeclarations = mutableListOf<DeclarationASTNode>()
+        for (declaration in node.declarations) {
+            if (declaration is ClassDeclarationNode) {
+                typeDeclarations.add(declaration)
+            } else {
+                otherDeclarations.add(declaration)
+            }
+        }
+        // build type stubs first to properly resolve types in function declarations
+        for (declaration in typeDeclarations + otherDeclarations) {
+            val stub = buildDeclarationStub(declaration)
+            symbolResolver.declare(stub)
+        }
+        for (declaration in node.declarations) {
+            buildDeclaration(declaration, TopLevelContext)
+        }
     }
 
     override fun buildIf(node: IfNode): SemanticStatement {
@@ -146,10 +199,6 @@ class SemanticBuilder : SomeBuilder {
             buildStatement(node.body)
         }
         return While(condition, body)
-    }
-
-    override fun buildSymbol(node: SymbolNode): SemanticExpression {
-        return symbolResolver.resolveSymbol(node.name)
     }
 
     override fun buildAssignment(node: AssignmentNode): Assignment {

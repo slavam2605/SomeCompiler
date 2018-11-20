@@ -14,7 +14,12 @@ fun main(args: Array<String>) {
             typeParameterBound = "",
             methodPrefix = "build",
             methodParamName = "node",
-            additionalParams = listOf(),
+            additionalParamsMap = {
+                when (it) {
+                    "DeclarationASTNode" -> listOf("context: CompilationContext")
+                    else -> listOf()
+                }
+            },
             exceptionName = "CompilationException",
             passElementToException = true,
             interfaceMap = mapOf(
@@ -47,7 +52,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "",
             methodPrefix = "evaluate",
             methodParamName = "element",
-            additionalParams = listOf(),
+            additionalParamsMap = { listOf() },
             exceptionName = "EvaluationException",
             passElementToException = true,
             interfaceMap = mapOf("SemanticExpression" to "Value"),
@@ -103,7 +108,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "MonotonicAnalysis<T>",
             methodPrefix = "analyse",
             methodParamName = "element",
-            additionalParams = listOf("input: T"),
+            additionalParamsMap = { listOf("input: T") },
             exceptionName = "RuntimeException",
             passElementToException = false,
             interfaceMap = mapOf(
@@ -131,7 +136,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "MonotonicAnalysis<T>",
             methodPrefix = "analyse",
             methodParamName = "element",
-            additionalParams = listOf(),
+            additionalParamsMap = { listOf() },
             exceptionName = "RuntimeException",
             passElementToException = false,
             interfaceMap = mapOf(

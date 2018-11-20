@@ -16,7 +16,21 @@ file returns [DeclarationListNode result]
     
 declaration returns [DeclarationASTNode result]
     : functionDeclaration { $result = $functionDeclaration.result; }
+    | classDeclaration { $result = $classDeclaration.result; }
     ;
+
+classDeclaration returns [ClassDeclarationNode result]
+    : 'class' name=IDENT '{' declarations+=inClassDeclaration* '}' { $result = new ClassDeclarationNode($name.text, $declarations.stream().map(x -> x.result).collect(Collectors.toList())); }
+    ;
+
+inClassDeclaration returns [DeclarationASTNode result]
+    : functionDeclaration { $result = $functionDeclaration.result; }
+    | fieldDeclaration { $result = $fieldDeclaration.result; }
+    ;
+
+fieldDeclaration returns [FieldDeclarationNode result]
+    : 'var' name=IDENT ':' typeName=type ';' { $result = new FieldDeclarationNode($name.text, $typeName.result); }
+    ; 
     
 functionDeclaration returns [FunctionDeclarationNode result]
     : 'fun' name=IDENT '(' (| list+=parameter (',' list+=parameter)* ) ')' ':' returnType=type '{' body=statementList '}'
@@ -62,12 +76,13 @@ expressionList returns [List<ExpressionASTNode> result]
     ;
     
 expression returns [ExpressionASTNode result]
-    : name=IDENT { $result = new SymbolNode($name.text); }
+    : name=IDENT { $result = new QualifiedSymbolNode(null, $name.text); }
     | value=NUMBER { $result = new ConstantNode($value.text); }
     | '*' target=expression { $result = new DereferenceNode($target.result); }
     | '&' target=expression { $result = new AddressOfNode($target.result); }
     | target=expression '(' list=expressionList ')' { $result = new InvocationNode($target.result, $list.result); }
     | '(' expr=expression ')' { $result = $expr.result; }
+    | left=expression '.' name=IDENT { $result = new QualifiedSymbolNode($left.result, $name.text); }
     | left=expression op=('*' | '/') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('+' | '-') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }
     | left=expression op=('==' | '<') right=expression { $result = new BinaryOperationNode($op.text, $left.result, $right.result); }

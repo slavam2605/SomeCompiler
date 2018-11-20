@@ -5,12 +5,12 @@ package moklev.compiler.types
  */
 class ArrayPointerType(sourceType: Type) : PointerType(sourceType) {
     override fun equals(other: Any?): Boolean {
-        if (javaClass != other?.javaClass) 
+        if (other?.javaClass != ArrayPointerType::class.java)
             return false
-        return super.equals(other)
+        return (other as PointerType).sourceType == sourceType
     }
 
     override fun hashCode(): Int {
-        return super.hashCode()
+        return sourceType.hashCode()
     }
 }
