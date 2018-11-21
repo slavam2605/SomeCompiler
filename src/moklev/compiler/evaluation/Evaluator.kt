@@ -57,8 +57,13 @@ class Evaluator : SomeEvaluator {
         } 
         Evaluator().apply {
             withScope {
+                val offset = if (target is MethodReference) 1 else 0
                 parameters.forEachIndexed { i, value ->
-                    initializeLocalVariable(target.declaration.parameters[i].first, value)
+                    if (target is MethodReference && i == 0) {
+                        initializeLocalVariable("this", value)
+                    } else {
+                        initializeLocalVariable(target.declaration.parameters[i - offset].first, value)
+                    }
                 }
                 evaluateStatement(target.declaration.body)
             }

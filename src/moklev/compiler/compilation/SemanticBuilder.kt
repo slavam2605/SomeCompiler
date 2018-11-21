@@ -26,20 +26,10 @@ class SemanticBuilder : SomeBuilder {
     val symbolResolver = SymbolResolver()
     val typeResolver = TypeResolver(symbolResolver)
     val semanticAnalyzer = SemanticAnalyzer()
-    var currentFunction: FunctionDeclaration? = null
-
-    private inline fun <T> withFunction(function: FunctionDeclaration, body: () -> T): T {
-        currentFunction = function
-        try {
-            return body()
-        } finally {
-            currentFunction = null
-        }
-    }
 
     override fun buildQualifiedSymbol(node: QualifiedSymbolNode, context: CompilationContext): SemanticExpression {
         val target = node.target?.let { buildExpression(it, context) }
-        return symbolResolver.resolveSymbol(target, node.name)
+        return symbolResolver.resolveSymbol(target, node.name, context)
     }
     
     override fun buildFieldDeclaration(node: FieldDeclarationNode, context: CompilationContext) = Unit
@@ -97,11 +87,15 @@ class SemanticBuilder : SomeBuilder {
     override fun buildInvocation(node: InvocationNode, context: CompilationContext): SemanticExpression {
         val target = buildExpression(node.target, context)
         val targetParameters = when (target) {
+            is MethodReference -> listOf("this" to PointerType(target.targetType)) + target.declaration.parameters
             is FunctionReference -> target.declaration.parameters
             is ConstructorReference -> target.declaration.fields.map { it.name to it.type }
             else -> throw CompilationException(node, InvocationTargetError(target))
         }
-        val parameters = node.parameters.map { buildExpression(it, context) }
+        var parameters = node.parameters.map { buildExpression(it, context) }
+        if (target is MethodReference) {
+            parameters = listOf(AddressOf(target.target)) + parameters
+        }
         if (parameters.size != targetParameters.size)
             throw CompilationException(node, InvocationWrongNumberOfArgumentsError(targetParameters.size, parameters.size))
         for (index in 0 until parameters.size) {
@@ -113,7 +107,7 @@ class SemanticBuilder : SomeBuilder {
 
     override fun buildReturn(node: ReturnNode, context: CompilationContext): SemanticStatement {
         val value = buildExpression(node.value, context)
-        val function = currentFunction
+        val function = (context as? FunctionBodyContext)?.declaration
             ?: throw CompilationException(node, "No current function")
         if (value.type != function.returnType)
             throw CompilationException(node, ReturnTypeMismatchError(function.returnType, value.type))
@@ -150,14 +144,17 @@ class SemanticBuilder : SomeBuilder {
         val stub = when (context) {
             is TopLevelContext -> symbolResolver.declaredFunctions[node.name]
             is ClassDeclarationContext -> context.outerClass.methods.find { it.name == node.name }
+            else -> throw CompilationException(node, "Unexpected context for function declaration: `${context.javaClass}`")
         } ?: throw CompilationException(node, "No predeclared stub found")
-        val body = withFunction(stub) {
-            symbolResolver.withScope {
-                stub.parameters.forEach { (name, type) ->
-                    symbolResolver.declareVariable(name, type)
-                }
-                buildStatement(node.body, context)
+        val newContext = when (context) {
+            is ClassDeclarationContext -> MethodBodyContext(ClassType(context.outerClass), stub)
+            else -> FunctionBodyContext(stub)
+        }
+        val body = symbolResolver.withFunctionScope {
+            stub.parameters.forEach { (name, type) ->
+                symbolResolver.declareVariable(name, type)
             }
+            buildStatement(node.body, newContext)
         }
         stub.complete(body)
         semanticAnalyzer.analyzeFunctionDeclaration(stub)

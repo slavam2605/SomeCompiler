@@ -9,10 +9,7 @@ import moklev.compiler.semantic.SemanticDeclaration
 import moklev.compiler.semantic.SemanticExpression
 import moklev.compiler.semantic.SemanticStatement
 import moklev.compiler.semantic.impl.*
-import moklev.compiler.types.ArrayPointerType
-import moklev.compiler.types.ClassType
-import moklev.compiler.types.ScalarType
-import moklev.compiler.types.Type
+import moklev.compiler.types.*
 
 /**
  * @author Moklev Vyacheslav
@@ -22,6 +19,7 @@ class SymbolResolver : DeclarationHolder {
     val declaredFunctions = mutableMapOf<String, FunctionDeclaration>()
     val declaredClasses = mutableMapOf<String, ClassDeclaration>()
     val predefinedFunctions = mutableMapOf<String, FunctionDeclaration>()
+    val functionBaseScope = mutableListOf<Int>()
     
     init {
         addPredefinedFunction(
@@ -42,9 +40,9 @@ class SymbolResolver : DeclarationHolder {
         }
     }
     
-    fun resolveSymbol(target: SemanticExpression?, name: String): SemanticExpression {
+    fun resolveSymbol(target: SemanticExpression?, name: String, context: CompilationContext): SemanticExpression {
         if (target == null)
-            return resolveGlobalSymbol(name)
+            return resolveGlobalSymbol(name, context)
         return resolveQualifiedSymbol(target, name)
     }
 
@@ -62,7 +60,10 @@ class SymbolResolver : DeclarationHolder {
         throw CompilationException(UnresolvedSymbolError(name))
     }
     
-    private fun resolveGlobalSymbol(name: String): SemanticExpression {
+    private fun resolveGlobalSymbol(name: String, context: CompilationContext): SemanticExpression {
+        if (context is MethodBodyContext && name == "this") {
+            return LocalVariableReference("this", PointerType(context.targetType), functionBaseScope.last())
+        }
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
             val declaredType = scope[name] ?: return@forEachIndexed
             val scopeLevel = declaredVariables.size - scopeIndex - 1
@@ -93,6 +94,17 @@ class SymbolResolver : DeclarationHolder {
             return body()
         } finally {
             declaredVariables.removeAt(declaredVariables.lastIndex)
+        }
+    }
+
+    inline fun <T> withFunctionScope(body: () -> T): T {
+        declaredVariables.add(mutableMapOf())
+        functionBaseScope.add(declaredVariables.lastIndex)
+        try {
+            return body()
+        } finally {
+            declaredVariables.removeAt(declaredVariables.lastIndex)
+            functionBaseScope.removeAt(functionBaseScope.lastIndex)
         }
     }
 
