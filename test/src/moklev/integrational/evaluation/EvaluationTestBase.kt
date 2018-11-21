@@ -1,6 +1,7 @@
 package moklev.integrational.evaluation
 
 import moklev.compiler.compilation.SemanticBuilder
+import moklev.compiler.compilation.TopLevelContext
 import moklev.compiler.evaluation.Evaluator
 import moklev.compiler.parsing.ParserUtil
 import kotlin.test.assertEquals
@@ -13,8 +14,8 @@ abstract class EvaluationTestBase {
         val programAst = ParserUtil.parse(program)
         val expressionAst = ParserUtil.parseExpression(testExpression)
         val builder = SemanticBuilder()
-        builder.build(programAst)
-        val expression = builder.buildExpression(expressionAst)
+        builder.build(programAst, TopLevelContext)
+        val expression = builder.buildExpression(expressionAst, TopLevelContext)
         val result = Evaluator().evaluateExpression(expression).toString()
         assertEquals(expectedResult, result)
     }

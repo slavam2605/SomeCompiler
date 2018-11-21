@@ -14,12 +14,7 @@ fun main(args: Array<String>) {
             typeParameterBound = "",
             methodPrefix = "build",
             methodParamName = "node",
-            additionalParamsMap = {
-                when (it) {
-                    "DeclarationASTNode" -> listOf("context: CompilationContext")
-                    else -> listOf()
-                }
-            },
+            additionalParamsMap = { listOf("context: CompilationContext") },
             exceptionName = "CompilationException",
             passElementToException = true,
             interfaceMap = mapOf(

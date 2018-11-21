@@ -1,6 +1,7 @@
 package moklev.integrational.compilation
 
 import moklev.compiler.compilation.SemanticBuilder
+import moklev.compiler.compilation.TopLevelContext
 import moklev.compiler.exceptions.CompilationException
 import moklev.compiler.parsing.ParserUtil
 import kotlin.test.assertEquals
@@ -29,6 +30,6 @@ abstract class CompilationTestBase {
     private fun buildProgram(program: String) {
         val programAst = ParserUtil.parse(program)
         val builder = SemanticBuilder()
-        builder.build(programAst)
+        builder.build(programAst, TopLevelContext)
     }
 }
