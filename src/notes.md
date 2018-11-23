@@ -32,3 +32,28 @@ With target:
 * Pointer types: `T*`
    * Array pointer types: `T[]` _(additionally allows shifts)_
 * Class types `SomeClass`
+
+## Syntax overview
+### Declarations
+* Function: `fun someName(arg1: type1, arg2: type2): someType { <body> }`
+* Class: `class someName { <declarations> }`
+    * Class field: _same as function_
+    * Class method: `var someName: someType;`
+    
+### Statements
+* Assignment: `someVar = someValue;`
+* If statement: `if (<expr>) { <bodyTrue> } else { <bodyFalse> }`, else branch is optional
+* While statement: `while (<expr>) { <body> }`
+* Return statement: `return <expr>;`
+* Local variable declaration: `var someName: someType;`
+* Function call: `someFoo();`
+
+### Expressions
+* Integer literal: `12`
+* Double literal: `14.0`
+* Dereference: `*somePointer`
+* Address of: `&someVariable`
+* Function call: `someFoo()`
+* Parenthesised expression: `(<expr>)`
+* Field of class: `someClassVar.someField`
+* Binary operations: `+`, `-`, `*`, `/`, `==`, `<`, `&&`, `||`
