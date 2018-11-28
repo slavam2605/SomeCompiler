@@ -148,4 +148,32 @@ fun main(args: Array<String>) {
             ),
             generatedClassName = "SomeBasicAnalyzer"
     ).run()
+
+    println("Generating backend compiler for semantic elements...")
+    GeneratorWorker(
+            pathToSources = "src/moklev/compiler/semantic",
+            pathToSourcesImpl = "src/moklev/compiler/semantic/impl",
+            trimInterface = { it!!.removePrefix("Semantic") },
+            trimImpl = { it!! },
+            withTypeParameter = false,
+            typeParameterBound = "",
+            methodPrefix = "compile",
+            methodParamName = "element",
+            additionalParamsMap = { listOf("context: CompilationContext") },
+            exceptionName = "BackendCompilationException",
+            passElementToException = true,
+            interfaceMap = mapOf(/*"SemanticExpression" to "Value"*/),
+            ignoreInterfaces = setOf(),
+            isAvailableAnnotation = { true },
+            onlyImplInterfaces = setOf(),
+            targetPackage = "moklev.compiler.backendCompilation",
+            targetDir = "gen",
+            headerLines = listOf(
+                    "import moklev.compiler.compilation.CompilationContext",
+                    "import moklev.compiler.exceptions.BackendCompilationException",
+                    "import moklev.compiler.semantic.*",
+                    "import moklev.compiler.semantic.impl.*"
+            ),
+            generatedClassName = "SomeBackendCompiler"
+    ).run()
 }

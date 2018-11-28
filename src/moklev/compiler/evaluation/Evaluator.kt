@@ -125,6 +125,11 @@ class Evaluator : SomeEvaluator {
                 ?: throw EvaluationException(element, "Variable is not initialized: ${element.name}") 
     }
 
+    override fun evaluateParameterReference(element: ParameterReference): Value {
+        return variableState[1][element.name]
+                ?: throw EvaluationException(element, "Parameter is not initialized: ${element.name}")
+    }
+
     override fun evaluateAssignment(element: Assignment) {
         val value = evaluateExpression(element.value)
         assign(element.target, value)
