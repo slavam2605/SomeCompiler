@@ -8,8 +8,15 @@ class X86Register(val name: String, size: Int) : X86StaticValue(size) {
     override fun toAssemblyString(): String = name
 }
 
-class IntegerLiteral(val value: String, size: Int? = null) : X86StaticValue(size) {
+class X86LocalStackElement(val offset: Int, size: Int) : X86StaticValue(size) {
+    override fun toAssemblyString(): String = "${-offset}(${RBP.toAssemblyString()})"
+}
+
+class X86IntegerLiteral(val value: String, size: Int? = null) : X86StaticValue(size) {
     override fun toAssemblyString(): String = "$$value"
+
+    override fun equals(other: Any?) = (other as? X86IntegerLiteral)?.value == value
+    override fun hashCode() = value.hashCode()
 }
 
 val RAX = X86Register("%rax", 8)

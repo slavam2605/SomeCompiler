@@ -67,12 +67,7 @@ class SymbolResolver : DeclarationHolder {
         declaredVariables.asReversed().forEachIndexed { scopeIndex, scope ->
             val declaredType = scope[name] ?: return@forEachIndexed
             val scopeLevel = declaredVariables.size - scopeIndex - 1
-            return if (scopeLevel == 1 &&
-                    context is FunctionBodyContext &&
-                    context.declaration.parameters.find { it.first == name } != null)
-                ParameterReference(name, declaredType)
-            else
-                LocalVariableReference(name, declaredType, scopeLevel)
+            return LocalVariableReference(name, declaredType, scopeLevel)
         }
         declaredFunctions[name]?.let { declaredFunction ->
             return FunctionReference(declaredFunction)

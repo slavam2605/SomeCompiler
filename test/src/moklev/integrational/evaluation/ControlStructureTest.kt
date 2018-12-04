@@ -45,8 +45,25 @@ class ControlStructureTest(testMode: EvaluationTestMode) : EvaluationTestBase(te
                 }
             }
         """
-        for (i in 1 until 10000) {
+        for (i in 1 until 1000) {
             runTest(sqrtProgram, "sqrt($i)", "Int64[${Math.sqrt(i.toDouble()).roundToInt()}]")
         }
+    }
+
+    @Test
+    fun testSavingRegistersOnInvocation() {
+        runTest("""
+            fun bar(x: int64): int64 {
+                return x * x;
+            }
+
+            fun foo(x: int64, y: int64): int64 {
+                var z: int64;
+                var t: int64;
+                z = x + y;
+                t = bar(z);
+                return z + t;
+            }
+        """, "foo(12, 20)", "Int64[1056]")
     }
 }

@@ -60,6 +60,18 @@ class X86AssemblyBuilder {
         lines.add("cmov$op$sizeSuffix ${value.toAssemblyString()}, ${dest.toAssemblyString()}")
     }
 
+    fun j(op: String, label: String) {
+        lines.add("j$op $label")
+    }
+
+    fun jmp(label: String) {
+        lines.add("jmp $label")
+    }
+
+    fun call(label: String) {
+        lines.add("call $label")
+    }
+
     fun set(flag: String, dest: X86StaticValue) {
         require(dest.size == 1)
         lines.add("set$flag ${dest.toAssemblyString()}")

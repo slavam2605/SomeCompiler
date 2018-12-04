@@ -1,5 +1,8 @@
 package moklev.compiler.backendCompilation.x86
 
+import moklev.compiler.types.ScalarType
+import moklev.compiler.types.Type
+
 fun sizeLetter(size: Int?) = when (size) {
     1 -> "b"
     2 -> "w"
@@ -15,4 +18,13 @@ fun commonSize(vararg size: Int?): Int {
     if (allNotNull.any { it != allNotNull[0] })
         throw Exception("Found different sizes")
     return allNotNull[0]
+}
+
+fun machineSizeOf(type: Type): Int = when (type) {
+    is ScalarType -> when (type) {
+        ScalarType.INT64 -> 8
+        ScalarType.BOOLEAN -> 8
+        ScalarType.DOUBLE -> 8
+    }
+    else -> throw Exception("Not supported: $type")
 }

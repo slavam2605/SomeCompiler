@@ -18,4 +18,6 @@ object WindowsSpecificTool : TargetSpecificTool {
             else -> TODO("on stack")
         }
     }
+
+    override val volatileRegisters = setOf(RAX, RCX, RDX, R8, R9, R10, R11)
 }
