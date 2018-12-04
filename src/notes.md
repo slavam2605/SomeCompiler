@@ -26,9 +26,9 @@ With target:
 
 ## Type system
 * Basic types:
-   * `Int64`
-   * `Double`
-   * `Boolean`
+   * `int64`
+   * `double`
+   * `boolean`
 * Pointer types: `T*`
    * Array pointer types: `T[]` _(additionally allows shifts)_
 * Class types `SomeClass`
@@ -57,3 +57,8 @@ With target:
 * Parenthesised expression: `(<expr>)`
 * Field of class: `someClassVar.someField`
 * Binary operations: `+`, `-`, `*`, `/`, `==`, `<`, `&&`, `||`
+
+## X86 compilation notes
+### Types representation
+1. int64 -- as is
+2. boolean -- as int64, `0` if `false`, `1` if `true`

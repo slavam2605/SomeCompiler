@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+typedef int64_t bool;
+
 void format_int64(int64_t value) {
     printf("Int64[%lld]", value);
 }

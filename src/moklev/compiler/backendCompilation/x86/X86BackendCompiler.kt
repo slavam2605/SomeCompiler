@@ -90,15 +90,23 @@ class X86BackendCompiler(val targetTool: TargetSpecificTool) : SomeBackendCompil
                     cqo()
                     idiv(RCX)
                 }
-                "==" -> TODO("boolean values")
-                "<" -> TODO("boolean values")
+                "==" -> {
+                    cmp(RAX, RCX)
+                    set("e", AL)
+                    movzx(RAX, AL)
+                }
+                "<" -> {
+                    cmp(RAX, RCX)
+                    set("l", AL)
+                    movzx(RAX, AL)
+                }
             }
             push(RAX)
         }
     }
 
     override fun compileInt64Constant(element: Int64Constant, context: CompilationContext) {
-        builder.push(IntegerLiteral(element.value.toString()))
+        builder.push(IntegerLiteral(element.value.toString(), 8))
     }
 
     override fun compileInvocation(element: Invocation, context: CompilationContext) {

@@ -90,6 +90,7 @@ abstract class EvaluationTestBase(val testMode: EvaluationTestMode) {
                 }
                 println("Result: $result")
                 assertEquals(singleExpectedResult, result)
+                File(x86ToolsFolder, "main.exe").delete()
             }
         }
     }
