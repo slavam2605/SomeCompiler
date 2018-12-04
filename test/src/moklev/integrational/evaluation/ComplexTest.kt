@@ -6,7 +6,7 @@ import java.util.*
 /**
  * @author Moklev Vyacheslav
  */
-class ComplexTest : EvaluationTestBase() {
+class ComplexTest(testMode: EvaluationTestMode) : EvaluationTestBase(testMode) {
     companion object {
         const val seed = 7484987838L
     }

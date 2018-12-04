@@ -5,7 +5,7 @@ import org.junit.Test
 /**
  * @author Moklev Vyacheslav
  */
-class PointersTest : EvaluationTestBase() {
+class PointersTest(testMode: EvaluationTestMode) : EvaluationTestBase(testMode) {
     @Test
     fun testLocalVariablePointer() {
         runTest(

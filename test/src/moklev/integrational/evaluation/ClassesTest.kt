@@ -2,7 +2,7 @@ package moklev.integrational.evaluation
 
 import org.junit.Test
 
-class ClassesTest : EvaluationTestBase() {
+class ClassesTest(testMode: EvaluationTestMode) : EvaluationTestBase(testMode) {
     @Test
     fun testSimpleClass() {
         runTest(

@@ -1,16 +1,12 @@
 package moklev.integrational.evaluation
 
-import moklev.compiler.compilation.SemanticBuilder
-import moklev.compiler.evaluation.Evaluator
-import moklev.compiler.parsing.ParserUtil
 import org.junit.Test
 import java.util.*
-import kotlin.test.assertEquals
 
 /**
  * @author Moklev Vyacheslav
  */
-class ArithmeticTest : EvaluationTestBase() {
+class ArithmeticTest(testMode: EvaluationTestMode) : EvaluationTestBase(testMode) {
     companion object {
         const val seed = 7468297228L
     }

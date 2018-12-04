@@ -6,7 +6,7 @@ import kotlin.math.roundToInt
 /**
  * @author Moklev Vyacheslav
  */
-class ControlStructureTest : EvaluationTestBase() {
+class ControlStructureTest(testMode: EvaluationTestMode) : EvaluationTestBase(testMode) {
     @Test
     fun testSimpleControlStructures() {
         runTest("fun foo(x: int64): int64 { if (x < 0) { return 1; } else { return 2; } }", "foo(0-10)", "Int64[1]")

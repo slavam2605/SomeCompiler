@@ -7,3 +7,8 @@ gen/
 # User-specific data
 .idea/**/misc.xml
 .idea/**/workspace.xml
+
+# Native test output
+test/x86_test_tools/main.c
+test/x86_test_tools/main.exe
+test/x86_test_tools/out.s
